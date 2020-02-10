@@ -1,0 +1,449 @@
+\documentclass[t]{beamer}
+
+\usetheme{default}
+\setbeamertemplate{navigation symbols}{}
+
+%\mode<presentation>
+%{
+%  \usetheme{Warsaw}
+%  % or ...
+%
+%  \setbeamercovered{transparent}
+%  % or whatever (possibly just delete it)
+%}
+
+
+\usepackage[english]{babel}
+% or whatever
+
+\usepackage[latin1]{inputenc}
+% or whatever
+
+\usepackage{times}
+\usepackage[T1]{fontenc}
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
+
+
+%\usepackage{verbatim}
+\usepackage{colortbl}
+
+ %\newrgbcolor{hilight}{0.000 1.000 0.000}   % green
+ %\xdefinecolor{hilight}{rgb}{0.000 1.000 0.000} % green
+ \newcommand{\hilight}{\color{blue}}
+ \xdefinecolor{MyGreen}{rgb}{0.000, 0.500, 0.000} % green
+ \newcommand{\nonliteral}{\color{MyGreen}}
+
+\title{Merging in Git}
+
+\author{Elijah Newren}
+\institute{}
+
+\date{}
+
+\subject{Talks}
+% This is only inserted into the PDF information catalog. Can be left
+% out. 
+
+
+
+% If you have a file called "university-logo-filename.xxx", where xxx
+% is a graphic format that can be processed by latex or pdflatex,
+% resp., then you can add a logo as follows:
+
+% \pgfdeclareimage[height=0.5cm]{university-logo}{university-logo-filename}
+% \logo{\pgfuseimage{university-logo}}
+
+
+
+% If you wish to uncover everything in a step-wise fashion, uncomment
+% the following command: 
+
+%\beamerdefaultoverlayspecification{<+->}
+
+
+\begin{document}
+
+%\begin{frame}
+%  \titlepage
+%\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Background}
+
+\begin{frame}[containsverbatim]
+  \frametitle{Three-way content merge}
+
+  {\footnotesize
+  \begin{verbatim}
+File from branch A:
+    
+...
+speak_like_a_pirate(arrrrgs);
+explore_sea(aye, matey);
+shiver(me.timbers);
+...
+  \end{verbatim}
+  }
+  
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{Three-way content merge}
+
+  {\footnotesize
+  \begin{verbatim}
+File from branch A:             File from branch B:
+
+...                             ...                             
+speak_like_a_pirate(arrrrgs);   speak_like_a_pirate(arrrrgs);   
+explore_sea(aye, matey);        explore_sea(me.love[0]);
+shiver(me.timbers);             shiver(me.timbers);             
+...                             ...
+  \end{verbatim}
+  }
+  
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{Three-way content merge}
+
+  {\footnotesize
+  \begin{verbatim}
+File from branch A:             File from branch B:
+
+...                             ...                             
+speak_like_a_pirate(arrrrgs);   speak_like_a_pirate(arrrrgs);   
+explore_sea(aye, matey);        explore_sea(me.love[0]);
+shiver(me.timbers);             shiver(me.timbers);             
+...                             ...
+  \end{verbatim}
+  }
+
+  \vspace*{-1.2em}
+  Correct merge depends on the version in the merge base:
+  {\footnotesize
+  \texttt{
+...\\
+speak\_like\_a\_pirate(arrrrgs);\\
+explore\_sea(me.love[0]);\\
+shiver(me.timbers);\\
+...
+  }}
+  
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{Three-way content merge}
+
+  {\footnotesize
+  \begin{verbatim}
+File from branch A:             File from branch B:
+
+...                             ...                             
+speak_like_a_pirate(arrrrgs);   speak_like_a_pirate(arrrrgs);   
+explore_sea(aye, matey);        explore_sea(me.love[0]);
+shiver(me.timbers);             shiver(me.timbers);             
+...                             ...
+  \end{verbatim}
+  }
+
+  \vspace*{-1.2em}
+  Correct merge depends on the version in the merge base:
+  {\footnotesize
+  \texttt{
+...\\
+speak\_like\_a\_pirate(arrrrgs);\\
+{\color{red}explore\_sea(aye, matey);}\\
+shiver(me.timbers);\\
+...
+  }}
+  
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{Three-way content merge}
+
+  {\footnotesize
+  \begin{verbatim}
+File from branch A:             File from branch B:
+
+...                             ...                             
+speak_like_a_pirate(arrrrgs);   speak_like_a_pirate(arrrrgs);   
+explore_sea(aye, matey);        explore_sea(me.love[0]);
+shiver(me.timbers);             shiver(me.timbers);             
+...                             ...
+  \end{verbatim}
+  }
+
+  \vspace*{-1.2em}
+  Correct merge depends on the version in the merge base:
+  {\footnotesize
+  \texttt{
+...\\
+speak\_like\_a\_pirate(arrrrgs);\\
+{\color{red}explore\_sea(plus, plus);}\\
+shiver(me.timbers);\\
+...
+  }}
+  
+\end{frame}
+
+\begin{frame}[containsverbatim]
+  \frametitle{Three-way content merge}
+
+  {\footnotesize
+  \begin{verbatim}
+File from branch A:             File from branch B:
+
+...                             ...                             
+speak_like_a_pirate(arrrrgs);   speak_like_a_pirate(arrrrgs);   
+explore_sea(aye, matey);        explore_sea(me.love[0]);
+shiver(me.timbers);             shiver(me.timbers);             
+...                             ...
+  \end{verbatim}
+  }
+
+  \vspace*{-1.2em}
+  Correct merge depends on the version in the merge base:
+  {\footnotesize
+  \texttt{
+...\\
+speak\_like\_a\_pirate(arrrrgs);\\
+{\color{red}explore\_sea(plus, plus);}\\
+shiver(me.timbers);\\
+...
+  }}
+
+  \vspace*{1em}
+  Shorthand:\\
+  {\footnotesize
+  \texttt{
+  \hspace*{0.7em} path\\
+  O: sha1sum\_orig\\
+  A: sha1sum\_A\\
+  B: sha1sum\_B
+  }}
+  
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Renames}
+
+  Rename+Modify, if rename not detected:\\
+    {\footnotesize
+    \begin{tabular}{lll}
+         & orig\_path  & new\_path   \\
+      O: & 5ca1ab1e... & 00000000... \\
+      A: & f005ba11... & 00000000... \\
+      B: & 00000000... & b0a710ad... \\
+    \end{tabular}
+    }
+
+  \only<2->{
+    \vspace*{0.6em}
+    Detecting renames:\\
+    {\footnotesize
+    \qquad renames on side A: ...\\
+    \qquad renames on side B: orig\_path $\Rightarrow$ new\_path, ...
+  }}
+
+  \only<3->{
+    \vspace*{0.6em}
+    ...allows us to coalesce and do three-way merge:\\
+    {\footnotesize
+    \begin{tabular}{ll}
+         & orig\_path $\Rightarrow$ new\_path   \\
+      O: & 5ca1ab1e... \\
+      A: & f005ba11... \\
+      B: & b0a710ad... \\
+    \end{tabular}
+    }
+   }
+
+  \only<4->{
+    \vspace*{0.6em}
+    Which you may be used to seeing as:\\
+    {\footnotesize
+    \texttt{{%
+      \quad <{}<{}<{}<{}<{}<{}< HEAD\only<5>{{\color{red}:orig\_path}}\\
+      \quad explore\_sea(aye, matey); \\
+      \quad =======\\
+      \quad explore\_sea(me.love[0]); \\
+      \quad >{}>{}>{}>{}>{}>{}> OTHER\_BRANCH\only<5>{\color{red}:new\_path}\\
+    }}
+    }
+   }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Problem}
+\begin{frame}[containsverbatim]
+  \frametitle{Cherry-picking in a repo with lots of renames}
+
+  Let's get a change we want to cherry-pick:
+
+  {\footnotesize
+  \begin{verbatim}
+   $ git checkout 3.13.4.3-enterprise_patching
+   $ git fetch origin refs/changes/30/289530/3
+   $ git log -1 --oneline --name-status refs/changes/30/289530/3
+   9327fd6950f QA-98552 Mark objects incoming later
+   M       modules/.../peering/PeeringSubsetPR.java
+   M       modules/.../peering/impl/PeeredLinkSetApplier.java
+   M       modules/.../peering/impl/PeeredObjectApplier.java
+   M       modules/.../peering/impl/PeeringExportPR.java
+   M       modules/.../peering/impl/PeeringImports.java
+   M       modules/.../peering/impl/PeeringPR.java
+   A       modules/.../peering/SubsetPeeringThreeWayTest.java
+   M       modules/.../session/TestPeeringDBSession.java
+  \end{verbatim}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Cherry-picking in a repo with lots of renames}
+
+  {\footnotesize\texttt{%
+  \$ time git \only<3>{{\color{red}-c merge.renameLimit=99999} }cherry-pick 9327fd\\
+  error: could not apply 9327fd6950f... QA-98552 Mark objects incoming later\\
+  hint: after resolving the conflicts, mark the corrected paths\\
+  hint: with 'git add <paths>' or 'git rm <paths>'\\
+  hint: and commit the result with 'git commit'
+  \\[1em]
+  real\qquad0m13.%
+\only<1-2>{878}%
+\only<3>{{\color{red}780}}%
+s
+  }}
+
+  \only<2->{
+  \vspace*{1em}
+  {\footnotesize\texttt{%
+  \$ git status\\
+  ...\\
+Changes to be committed:\\
+\quad	new file:   modules/.../SubsetPeeringThreeWayTest.java\\
+Unmerged paths:\\
+\quad	deleted by us:   modules/.../PeeringSubsetPR.java\\
+\quad	deleted by us:   modules/.../PeeredLinkSetApplier.java\\
+\quad	deleted by us:   modules/.../PeeredObjectApplier.java\\
+\quad	deleted by us:   modules/.../PeeringExportPR.java\\
+\quad	deleted by us:   modules/.../PeeringImports.java\\
+\quad	deleted by us:   modules/.../PeeringPR.java\\
+\quad	deleted by us:   modules/.../TestPeeringDBSession.java\\
+  }}
+  }
+  
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Solutions}
+\begin{frame}
+  \frametitle{A handful of git patches later...}
+
+  {\footnotesize\texttt{%
+    \$ time git \only<3>{{\color{red}-c merge.renameLimit=48941} }cherry-pick 9327fd\\
+  }}
+  \only<2->{
+  {\footnotesize\texttt{%
+  \only<2>{{\color{red}%
+  warning: inexact rename detection was skipped due to too many files.\\
+  warning: you may want to set your merge.renamelimit variable to at least 48941 and retry the command.\\}}
+  \only<3>{{\color{red}%
+  Performing inexact rename detection: 100\% (2836767183/2836767183), done.\\
+  }}
+  error: could not apply 9327fd6950f... QA-98552 Mark objects incoming later\\
+  hint: after resolving the conflicts, mark the corrected paths\\
+  hint: with 'git add <paths>' or 'git rm <paths>'\\
+  hint: and commit the result with 'git commit'
+  \\[1em]
+  real\qquad%
+\only<2>{0m13.873s}%
+\only<3>{{\color{red}9m8.790s}}%
+  }}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{\only<1-2>{A handful}\only<3>{{\color{red}Dozens}}\only<4>{{\color{red}Three series}} of git patches later...}
+
+  {\footnotesize\texttt{%
+  \only<1-3>{%
+    \$ time git -c merge.renameLimit=48941 cherry-pick 9327fd\\
+    Performing inexact rename detection: 100\% (2836767183/2836767183), done.\\
+  }\only<4>{%
+    \$ time {\color{red}git cherry-pick 9327fd}\\
+  }
+  ...\\
+  real\qquad\only<1-3>{9m8.790s}\only<4>{{\color{red}0m15.873s}}\\[2em]
+  }}
+
+  \only<2->{
+  {\footnotesize\texttt{%
+  \$ git status\\
+  You are currently cherry-picking commit 9327fd6950f.\\
+  ...\\
+Changes to be committed:\\
+\only<2>{%
+\quad	new file:   modules/.../SubsetPeeringThreeWayTest.java\\
+}
+\quad	modified:   pg/gotham/.../PeeredObjectApplier.java\\
+\quad	modified:   pg/gotham/.../PeeringExportPR.java\\
+\quad	modified:   pg/gotham/.../PeeringPR.java\\
+\only<3-4>{%
+{\only<3>{\color{red}}
+\quad	new file:   pg/gotham/.../SubsetPeeringThreeWayTest.java\\
+}}
+\quad	modified:   pg/gotham/.../TestPeeringDBSession.java \\
+Unmerged paths:\\
+\quad	both modified:   pg/gotham/.../PeeringSubsetPR.java\\
+\quad	both modified:   pg/gotham/.../PeeredLinkSetApplier.java\\
+\quad	both modified:   pg/gotham/.../PeeringImports.java
+  }}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Submitting Upstream}
+
+  \begin{itemize}
+  \item https://public-inbox.org/git/20171110173956.25105-1-newren@gmail.com/
+  \item https://public-inbox.org/git/20171110190550.27059-1-newren@gmail.com/
+  \item https://public-inbox.org/git/20171110222156.23221-1-newren@gmail.com/
+  \end{itemize}
+
+  \only<2->{
+    \vspace*{2em}
+    
+    When I told folks that "You don't need these special scripts to cherry
+    pick things; just set merge.renameLimit to something higher," they
+    responded that merge.renameLimit didn't work.\\[1em]
+    
+    \only<3->{I didn't believe them.\\[1em]}
+    
+    \only<4>{These git patches represent my attempt to continue to not
+      believe them.  :-)} }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
+
+

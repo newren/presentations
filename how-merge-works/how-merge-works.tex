@@ -1,0 +1,947 @@
+\documentclass[t]{beamer}
+\usepackage{multicol}
+
+\usetheme{default}
+\setbeamertemplate{navigation symbols}{}
+
+%\mode<presentation>
+%{
+%  \usetheme{Warsaw}
+%  % or ...
+%
+%  \setbeamercovered{transparent}
+%  % or whatever (possibly just delete it)
+%}
+
+
+\usepackage[english]{babel}
+% or whatever
+
+\usepackage[latin1]{inputenc}
+% or whatever
+
+\usepackage{times}
+\usepackage[T1]{fontenc}
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
+
+
+%\usepackage{verbatim}
+\usepackage{colortbl}
+
+ %\newrgbcolor{hilight}{0.000 1.000 0.000}   % green
+ %\xdefinecolor{hilight}{rgb}{0.000 1.000 0.000} % green
+ %\newcommand{\hilight}{\color{blue}}
+ %\xdefinecolor{MyGreen}{rgb}{0.000, 0.500, 0.000} % green
+ \colorlet{myred}{red!90!black} % slightly darker than normal red
+ \colorlet{myblue}{cyan}        % plain cyan works; might consdier darkening
+ \colorlet{mygreen}{green!70!black} % slightly darker than normal green
+ %\newcommand{\nonliteral}{\color{MyGreen}}
+
+ \newenvironment{myitemize}
+                {
+                  \begin{itemize}
+                    \setlength{\itemsep}{0pt}
+                    \setlength{\parskip}{-0.125\baselineskip}
+                    \setlength{\parsep} {0pt}
+                }%
+                {\end{itemize}}
+
+\title{Merging in Git}
+
+\author{Elijah Newren}
+\institute{}
+
+\date{}
+
+\subject{Talks}
+% This is only inserted into the PDF information catalog. Can be left
+% out.
+
+
+
+% If you have a file called "university-logo-filename.xxx", where xxx
+% is a graphic format that can be processed by latex or pdflatex,
+% resp., then you can add a logo as follows:
+
+% \pgfdeclareimage[height=0.5cm]{university-logo}{university-logo-filename}
+% \logo{\pgfuseimage{university-logo}}
+
+
+
+% If you wish to uncover everything in a step-wise fashion, uncomment
+% the following command:
+
+%\beamerdefaultoverlayspecification{<+->}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Overview}
+  \tableofcontents
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Three-way content merge}
+
+\begin{frame}
+  \frametitle{Three-way content merge}
+
+  \begin{multicols}{2}
+    File from branch A:\\
+    {\footnotesize\texttt{%
+    ...                             \\
+    speak\_like\_a\_pirate(arrrgs); \\
+    \only<3->{\color{myred}}explore\_sea(aye, matey);\only<3->{\color{black}}\\
+    shiver(me.timbers);             \\
+    ...                             \\
+    }}
+    \columnbreak
+    \pause
+    Same file from branch B:\\
+    {\footnotesize\texttt{%
+    ...                             \\
+    speak\_like\_a\_pirate(arrrgs); \\
+    \only<3->{\color{myred}}explore\_sea(me.love[0]);\only<3->{\color{black}}\\
+    shiver(me.timbers);             \\
+    ...
+    }}
+  \end{multicols}%
+
+  \only<4->{
+    Correct merge depends on the version in the merge base:\\
+    {\footnotesize\texttt{%
+      speak\_like\_a\_pirate(arrrgs);\\
+      \only<4-5>{{\color{myblue}?????}}
+      \only<6-7>{{\color{myblue}explore\_sea(aye, matey);}}
+      \only<8-9>{{\color{myblue}explore\_sea(me.love[0]);}}
+      \only<10-11>{{\color{myblue}explore\_sea(plus, plus);}}
+      \\
+      shiver(me.timbers);\\
+    }}
+
+    \only<5->{
+    \vspace*\baselineskip
+    \only<5>{Which we need to know to determine the merge:}
+    \only<6->{Which results in the following merge:}\\
+    {\footnotesize\texttt{%
+      speak\_like\_a\_pirate(arrrgs);\\
+      \only<6,8,10>{\qquad}
+      \only<5>{{\color{mygreen}?????}}
+      \only<7>{{\color{mygreen}explore\_sea(me.love[0]);}}
+      \only<9>{{\color{mygreen}explore\_sea(aye, matey);}}
+      \only<11>{{\color{mygreen}
+      <{}<{}<{}<{}<{}<{}< HEAD  \\
+      explore\_sea(aye, matey); \\
+      =======\\
+      explore\_sea(me.love[0]); \\
+      >{}>{}>{}>{}>{}>{}> branchB
+      }}
+      \\
+      shiver(me.timbers);\\
+    }}
+    }
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Three-way content merge, cont.}
+
+  git's sha1sum of individual files can be used for a shorthand:\\
+    {\footnotesize\texttt{%
+    \hspace*{0.6em} path\\
+    1:\ sha1sum(orig:path)\\
+    2:\ sha1sum(A:path)\\
+    3:\ sha1sum(B:path)\\[\baselineskip]
+    }}
+
+  \pause
+
+  For example (using shortened shas here):\\
+    {\footnotesize\texttt{%
+    \hspace*{0.6em} angryp.swine-latin\\
+    1:\ 5ca1ab1e\\
+    2:\ f005ba11\\
+    3:\ b0a710ad\\[\baselineskip]
+    }}
+
+  \pause
+
+  Where the ordering is as follows:
+  {\footnotesize
+  \begin{enumerate}
+    \item merge base
+    \item HEAD (branch checked out before running merge)
+    \item other branch (the argument you passed to merge)
+  \end{enumerate}
+  }
+
+  \pause
+
+  \vspace*{0.5\baselineskip}
+  git makes these accessible...
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Helpful git commands}
+\begin{frame}
+  \frametitle{Helpful commands}
+
+  \only<1-8>{
+  Getting details about which files are conflicted:\\
+    {\footnotesize\texttt{%
+    \$ git ls-files -u \\
+    100644 41e3dc22a02a972d0d42 1 \qquad angryp.swine-latin\\
+    100644 f185132ce93bf3e453b8 2 \qquad angryp.swine-latin\\
+    100644 b506e78238513afdfbb0 3 \qquad angryp.swine-latin\\[\baselineskip]
+    }}
+  }
+
+  \only<2-3>{
+    Viewing other versions:\\
+      {\footnotesize\texttt{%
+      \$ git show :stage:filename \\
+      \$ git show sha1sum \\[\baselineskip]
+      }}
+
+    \only<3>{
+    Example:\\
+      {\footnotesize\texttt{%
+      \$ git show :2:angryp.swine-latin \\
+      speak\_like\_a\_pirate(arrrgs);\\
+      explore\_sea(aye, matey);\\
+      shiver(me.timbers);\\[\baselineskip]
+      }}
+    }
+  }
+
+  \only<4-5>{
+    Diffing against other versions:\\
+      {\footnotesize\texttt{%
+      \$ git diff [-{}-base|-{}-ours|-{}-theirs] [filename] \\
+      }}
+
+    \only<5>{
+    Example:\\
+      {\footnotesize\texttt{%
+      \$ git diff -{}-base \\
+      ...\\
+      @@ -1,3 +1,7 @@\\
+      \ speak\_like\_a\_pirate(arrrgs);\\
+      {\color{myred}-explore\_sea(plus, plus);}\\
+      {\color{mygreen}%
+      +<{}<{}<{}<{}<{}<{}< HEAD\\
+      +explore\_sea(aye, matey);\\
+      +=======\\
+      +explore\_sea(me.love[0]);\\
+      +>{}>{}>{}>{}>{}>{}> branchB}\\
+      \ shiver(me.timbers);\\[\baselineskip]
+      }}
+    }
+  }
+
+  \only<6-8>{
+    Ovewriting with different versions:\\
+      {\footnotesize\texttt{%
+      \$ git checkout [-{}-ours|-{}-theirs] <filename> \\
+      \$ git checkout [-{}-merge|-m|-{}-conflict=diff3] <filename>
+          \\[0.5\baselineskip]
+      }}
+
+    \only<7>{
+    Example:\\
+      {\footnotesize\texttt{%
+      \$ git checkout -{}-ours angryp.swine-latin \\
+      \$ cat angryp.swine-latin \\
+      speak\_like\_a\_pirate(arrrgs);\\
+      explore\_sea(aye, matey);\\
+       shiver(me.timbers);\\[\baselineskip]
+      }}
+    }
+
+    \only<8>{
+    Example:\\
+      {\footnotesize\texttt{%
+      \$ git checkout -{}-conflict=diff3 angryp.swine-latin\\
+      \$ cat angryp.swine-latin \\
+      speak\_like\_a\_pirate(arrrgs);\\
+      <{}<{}<{}<{}<{}<{}< ours\\
+      explore\_sea(aye, matey);\\
+      ||||||| base\\
+      explore\_sea(plus, plus);\\
+      =======\\
+      explore\_sea(me.love[0]);\\
+      >{}>{}>{}>{}>{}>{}> theirs\\
+      shiver(me.timbers);\\[\baselineskip]
+      }}
+    }
+  }
+
+  \only<9-12>{
+    \only<9-11>{
+    Can look for commits which touched conflicted files:\\[0.5\baselineskip]
+      {\scriptsize\texttt{%
+      \$ git log HEAD...MERGE\_HEAD -{}- \textbackslash\\
+          \hspace*{10em} `git ls-files -u | awk \{print\textbackslash\$4\}`\\
+      {\color{brown}commit 95d844d711a8ba9fae97 (}{\color{cyan}HEAD}, {\color{cyan}branchA}{\color{brown})}\\
+      Author:\ Cap'n Blackbeard <black@beard.pirate>\\
+      Date:\   Tue May 22 13:53:03 2018 -0700\\[\baselineskip]
+      \qquad\!    Aye, aye\\[\baselineskip]
+      {\color{brown}commit 34fa04c4a1962cf949b3 (}{\color{cyan}branchB}{\color{brown})}\\
+      Author:\ Cap'n Whitebeard <white@beard.pirate>\\
+      Date:\   Tue May 22 13:52:48 2018 -0700\\[\baselineskip]
+      \qquad\!    Me first love\\[\baselineskip]
+      }}
+    }
+
+    \only<10-11>{
+      But there's an equivalent simple shorthand:\\
+      {\scriptsize\texttt{%
+      \$ git log -{}-merge\\[\baselineskip]
+      }}
+    }
+
+    \only<11>{
+      Which can be handy in combination with other flags, e.g.:\\
+      {\scriptsize\texttt{%
+      \$ git log -{}-merge -p -{}-oneline -{}-left-right\\
+      }}
+    }
+
+    \only<12>{
+      Using handy -{}-merge flag to log:\\[0.25\baselineskip]
+      {\scriptsize\texttt{%
+      \$ git log -{}-merge -p -{}-oneline -{}-left-right\\[0.5\baselineskip]
+      {\color{blue}\textbf{<}} {\color{brown}95d844d (}{\color{cyan}HEAD}, {\color{cyan}branchA}{\color{brown})} Aye, aye\\
+      diff --git a/angryp.swine-latin b/angryp.swine-latin\\
+      index 41e3dc2..f185132 100644\\
+      --- a/angryp.swine-latin\\
+      +++ b/angryp.swine-latin\\
+      @@ -1,3 +1,3 @@\\
+      \ speak\_like\_a\_pirate(arrrgs);\\
+      {\color{myred}-explore\_sea(plus, plus);}\\
+      {\color{mygreen}+explore\_sea(aye, matey);}\\
+      \ shiver(me.timbers);\\[0.5\baselineskip]
+      {\color{blue}\textbf{>}} {\color{brown}34fa04c (}{\color{cyan}branchB}{\color{brown})} Me first love\\
+      diff --git a/angryp.swine-latin b/angryp.swine-latin\\
+      index 41e3dc2..b506e78 100644\\
+      --- a/angryp.swine-latin\\
+      +++ b/angryp.swine-latin\\
+      @@ -1,3 +1,3 @@\\
+      \ speak\_like\_a\_pirate(arrrgs);\\
+      {\color{myred}-explore\_sea(plus, plus);}\\
+      {\color{mygreen}+explore\_sea(me.love[0]);}\\
+      \ shiver(me.timbers);\\
+      }}
+    }
+
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Helpful commands}
+
+  Pro-tip: You can ask git to check if there are conflict markers or
+  whitespace errors:\\[0.25\baselineskip]
+    {\scriptsize\texttt{%
+    \$ git diff -{}-check\\
+    angryp.swine-latin:2: leftover conflict marker\\
+    angryp.swine-latin:4: leftover conflict marker\\
+    angryp.swine-latin:6: leftover conflict marker\\
+    }}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Helpful commands, summarized}
+
+  Getting details about which files are conflicted:\\
+    {\footnotesize\texttt{%
+    \$ git ls-files -u \\[\baselineskip]
+    }}
+
+  Viewing other versions:\\
+    {\footnotesize\texttt{%
+    \$ git show :stage:filename \\[\baselineskip]
+    }}
+
+  Diffing against other versions:\\
+    {\footnotesize\texttt{%
+    \$ git diff [-{}-base|-{}-ours|-{}-theirs] [filename(s)] \\[\baselineskip]
+    }}
+
+  Ovewriting with different versions:\\
+    {\footnotesize\texttt{%
+    \$ git checkout [-{}-ours|-{}-theirs] <filename> \\
+    \$ git checkout [-{}-merge|-m|-{}-conflict=diff3] <filename>
+          \\[\baselineskip]
+    }}
+
+  Seeing which commits touched conflicted files:\\
+    {\scriptsize\texttt{%
+    \$ git log -{}-merge -p -{}-left-right\\[\baselineskip]
+    }}
+
+  Checking for remaining conflict markers:\\
+    {\scriptsize\texttt{%
+    \$ git diff -{}-check\\[\baselineskip]
+    }}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Critiques/Limitations}
+\begin{frame}
+  \frametitle{Critiques/Limitations of three-way merge idea}
+
+  \only<1-17>{
+  Under what circumstances is using this algorithm the wrong way to merge
+  three versions of the file?
+  }
+
+  \only<2-4>{
+  \begin{itemize}
+    \item Files must be ``normal'' (text)
+    \only<3->{
+    \begin{itemize}
+      \item binaries
+      \item symlinks
+      \item submodules
+    \end{itemize}
+    }
+  \end{itemize}
+  }
+  \only<4>{
+    Managing: git has some smarts (and some dumbs) for merging these
+    file types; look for ``binary'' in gitattributes(5).
+  }
+
+  \only<5-7>{
+  \begin{itemize}
+    \item Needs file ``encoding'' to be the same
+    \only<6>{
+    \begin{itemize}
+      \item ASCII vs. EBCDIC
+      \item CR vs. CRLF
+      \item whitespace normalization
+      \item unicode normalization
+      \item other programmatic modifications -- indentation, etc.
+    \end{itemize}
+    }
+  \end{itemize}
+  }
+  \only<7>{
+  Managing:
+  \begin{itemize}
+    \item Strategy options:
+    \begin{itemize}
+      \item -Xrenormalize
+      \item -Xignore-space-change
+      \item -Xignore-all-space
+      \item -Xignore-space-at-eol
+      \item -Xignore-cr-at-eol
+      \item -Xdiff-algorithm=[patience|minimal|histogram|myers]
+    \end{itemize}
+    \item Config options:
+    \begin{itemize}
+      \item merge.renormalize
+    \end{itemize}
+    \item Important manpages:
+    \begin{itemize}
+      \item git-merge(1) ({\tiny ``MERGE STRATEGIES'' (recursive),
+                          ``CONFIGURATION''})
+      \item gitattributes(5)
+    \end{itemize}
+  \end{itemize}
+  }
+
+  \only<8-10>{
+  \begin{itemize}
+    \item Assumes conflict markers are distinguishable from other text
+    \only<9->{
+    \begin{itemize}
+      \item What if you're writing documentation about how conflicts work?
+    \end{itemize}
+    }
+  \end{itemize}
+  }
+  \only<10>{
+  Managing: See ``conflict-marker-size'' in gitattributes(5)
+  }
+
+  \only<11-13>{
+  \begin{itemize}
+    \item Assumes line-based (vs. word-based) diffing
+    \only<12->{
+    \begin{itemize}
+      \item books
+      \item documentation
+      \item articles
+    \end{itemize}
+    }
+  \end{itemize}
+  }
+  \only<13>{
+    Managing: Um...don't re-wrap or just suck up extra conflicts?
+  }
+
+  \only<14-17>{
+  \begin{itemize}
+    \item Text-based diff ignores (most) semantic content
+    \only<15->{
+    \begin{itemize}
+      \item both branches add a new import on the same line
+      \item one branch adds call to a function, another adds an argument to it
+    \end{itemize}
+    }
+  \end{itemize}
+  }
+  \only<16-17>{
+  \begin{multicols}{2}
+    File from branch A:\\
+    {\footnotesize\texttt{%
+    ...                             \\
+    {\color{myred}-def inspect\_ship(cannons, mast)} \\
+    {\color{mygreen}+def inspect\_ship(cannons, mast, plank)} \\
+    ...                             \\
+    }}
+    \columnbreak
+    \pause
+    Different file from branch B:\\
+    {\footnotesize\texttt{%
+    ...                             \\
+    {\color{mygreen}+inspect\_ship(MHWCK\_045026, big\_pole)} \\
+    ...
+    }}
+  \end{multicols}%
+  }
+  \only<17>{
+    Managing: For some cases, extra manual conflict resolution.  For
+    other cases, make sure to build and test the merged result, not
+    just the proposed change.
+  }
+
+  \only<18-19>{
+    Big hammer: See ``custom merge driver'' in gitattributes(5)
+    \only<19>{
+    \begin{itemize}
+      \item Can define \texttt{merge.<driver>.\{name,driver\}}
+      \item Local-only, though
+    \end{itemize}
+    }
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Critiques/Limitations of three-way merge idea}
+
+  Under what circumstances is using this algorithm the wrong way to merge
+  three versions of the file?
+
+  \only<2->{
+  \begin{itemize}
+    \item Ignores intermediate history
+    \only<3->{
+    \begin{itemize}
+      \item Same fix applied on both branches.  Later, additional fixes were
+            made to the same lines on one branch.
+
+      \only<4->{
+      \item A ``fix'' was applied on both branches (cherry-picked or
+            manually committed in both places), but then reverted on one
+            side because it's harmful.
+      }
+
+    \end{itemize}
+    }
+  \end{itemize}
+  }
+
+  \only<5>{
+
+    Managing: For some cases, extra manual conflict resolution.  For
+    other cases, make sure to build and test the merged result, not
+    just the proposed change.
+
+    \vspace*{\baselineskip}
+    (If these two cases bother you enough, consider darcs or
+    \href{https://jneem.github.io/merging/}{\color{myblue}pijul}.)  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Applicability of three-way content merges}
+\begin{frame}
+  \frametitle{Applicability of three-way content merges}
+
+  Under what circumstances is using this algorithm the wrong way to
+  merge \only<1>{three versions}\only<2->{\textbf{\textit{three
+  versions}}} of \only<1-2>{the}\only<3->{\textbf{\textit{the}}}
+  file?
+
+  \only<4->{
+  \begin{itemize}
+    \item Can we assume that the same pathname at different points of history
+      implies the content is related?  (e.g. could delete a file and add an
+      unrelated one back.)
+    \only<5->{
+    \item Can we assume that the only related content for a file will be
+      found at the same pathname?
+    \only<6->{
+    \item Can we assume there are three versions of each ``file''?
+    }}
+  \end{itemize}
+  }
+
+  \only<7->{
+  Let's dig in, except:
+  \begin{itemize}
+    \item Git does not (yet?) do break detection (determining whether
+          same-named files are no longer related) for merges.
+    \only<8->{
+    \item Git does not (yet?) check for movement of blocks of code between
+          files (e.g. a function moved to a different file in one branch,
+          and that function was modified on other branch) for merges.  It does
+          detect code movement as part of git blame, assuming appropriate flags
+          are passed.
+    }
+  \end{itemize}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Applicability of three-way content merges}
+
+  Assuming previous page problems aren't an issue {\scriptsize (i.e.\
+  \begin{itemize}
+    \item Normal files
+    \item Same ``encoding''
+    \item No conflict markers already present
+    \item Line-based is okay
+    \item Files with same name are related
+    \item Content doesn't move between filenames
+    \item We have three versions of every file in each revsion
+  \end{itemize}
+  } what kinds of errors might Git report as preventing a
+  successful merge?
+
+  \only<2->{
+  \begin{itemize}
+    \item Content conflicts
+    \only<3->{
+    \item User has changes staged but not yet committed
+    \only<4->{
+    \item User has unstaged changes that would be overwritten
+      \only<5->{
+        \begin{itemize}
+        \item Unstaged delete could come with untracked directory in the way
+          \end{itemize}
+    }}}
+  \end{itemize}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Applicability of three-way content merges}
+
+  Assuming we can delete files, what additional kinds of conflicts can we get?
+  \pause
+  \begin{itemize}
+    \item modify/delete
+    \pause
+    \item untracked file in the way of content
+    \pause
+    \item untracked directory in the way
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Applicability of three-way content merges}
+
+  Assuming we can also add files, what additional kinds of conflicts can we get?
+  \pause
+  \begin{itemize}
+    \item add/add (both sides add foo)
+    \pause
+    \item directory/file (add foo vs. add foo/bar)
+    \pause
+    \item submodule/file
+    \pause
+    \item submodule/directory
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Applicability of three-way content merges}
+
+  Assuming we can also rename files, what additional kinds of
+  conflicts can we get?
+  \pause
+  \begin{itemize}
+    \item rename/del
+          {\scriptsize (A $\Rightarrow$ B vs. delete A)}
+    \pause
+    \item rename/add
+          {\scriptsize (A $\Rightarrow$ B vs. add B)}
+    \pause
+    \item rename/add/del
+          {\scriptsize (A $\Rightarrow$ B vs. delete A \& add different B)}
+    \pause
+    \item rename/rename(1to2)
+          {\scriptsize (A $\Rightarrow$ B vs. A $\Rightarrow$ C)}
+    \pause
+    \item rename/rename(1to2)/add/add
+          {\scriptsize (A $\Rightarrow$ B, add C vs. A $\Rightarrow$ C, add B)}
+    \pause
+    \item rename/rename(2to1)
+          {\scriptsize (B $\Rightarrow$ A vs. C $\Rightarrow$ A)}
+    \pause
+    \item rename/rename(2to1)/del/del
+          {\scriptsize (B $\Rightarrow$ A, delete C vs.
+                        C $\Rightarrow$ A, delete B)}
+    \pause
+    \item chains of rename/rename(1to2) and rename/rename(2to1)
+          {\scriptsize (A $\Rightarrow$ B, C $\Rightarrow$ D, E $\Rightarrow$ F
+                        vs.
+                        A $\Rightarrow$ F, C $\Rightarrow$ B, E $\Rightarrow$ D)}
+
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Applicability of three-way content merges}
+
+  What if there is no merge base?
+  \pause
+  \\[\baselineskip]
+  Turns any pair of non-identical files into add/add conflicts.
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Applicability of three-way content merges}
+
+  What if there are multiple merges bases?
+  \pause
+  \\[\baselineskip]
+  Merge the merge bases!
+  \pause
+  \\[\baselineskip]
+  ...but do NOT error out with conflicts.  Instead, forcibly resolve:
+  \pause
+  \begin{itemize}[<+->]
+    \item content conflicts
+    \item modify/delete
+    \item special files: binary, symlink, submodule
+    \item directory/file, directory/submodule, submodule/file
+    \item rename/delete
+    \item rename/add
+    \item rename/add/delete
+    \item rename/rename(1to2)
+    \item rename/rename(1to2)/add/add
+    \item rename/rename(2to1)
+    \item rename/rename(2to1)/delete/delete
+    \item chains of rename/rename(1to2) and rename/rename(2to1)
+    \item mode conflict (file/symlink, submodule/file, exec./plain, etc.)
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Applicability of three-way content merges}
+
+  Some things you may have not noticed:
+  \begin{itemize}[<+->]
+    \item May not readily be able to represent conflicts by adding content
+          to a file at the specified path(s).
+    \item Desired content may not be writable at specified file location
+    \item More than three versions of a file possible (4 or 6)
+    \item Each conflict type has three different resolutions
+    \begin{itemize}
+      \item working tree
+      \item index
+      \item recursive-merge-base
+    \end{itemize}
+    \item Nested conflict markers
+    \item Avoiding unnecessary updates
+    \item Dirty changes and untracked files have many ways of getting
+          in the way, especially with current design
+    \item Implementation issues that bubble up to the user
+    \begin{itemize}
+      \item rename detection heuristics
+      \item diff algorithm (see -Xdiff-algorithm)
+      \item writing intermediate file-merges to object store immediately
+    \end{itemize}
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Caveats}
+\begin{frame}
+  \frametitle{Caveats}
+
+  {\scriptsize
+
+  Critiques/Limitations of three-way merge idea\\[-0.5\baselineskip]
+  \begin{myitemize}
+    \item File Content
+      \begin{myitemize}\scriptsize
+        \item Files must be ``normal'' (text)%; counter-examples:
+          %* binary
+          %* symlinks
+          %* submodules
+        \item Needs file ``encoding'' to be the same% (merge.renormalize); issues:
+          %* ASCII vs. EBCDIC (yeah, sure)
+          %* CR vs. CRLF (happens...)
+          %* whitespace normalization?
+          %* unicode normalization?
+          %* other programmatic modifications -- indentation, etc.?
+        \item Assumes conflict markers are distinguishable from other text
+          % What if you're writing documenting, about how git-merge works?
+        \item Assumes line-based diffing%; issues:
+          %* journal, documentation, word-based articles
+        \item Text-based diff ignores semantic content%; issues:
+          %* one branch adds call to a function, another adds an argument to it
+      \end{myitemize}\vspace*{-0.3\baselineskip}
+    \item Ignores intermediate history%; issues:
+      %* "fix" applied on both sides, then reverted on one side because it's
+      %  harmful...
+      %* same fix on both sides, extra fixes on other side in same region =>
+      %  conflicts
+      %* however, three-way merge is hard enough for people to understand.
+      %  Explaining a conflict that arises from intermediate history might
+      %  become truly baffling
+  \end{myitemize}\vspace*{-0.3\baselineskip}
+
+  Applicability of three-way content merges:\\[-0.7\baselineskip]
+  \begin{myitemize}
+    \item Merge-base
+      \begin{myitemize}\scriptsize
+      \item exists%; counter-examples:
+        %* merging independent repositories -- do two-way merge
+      \item unique%; counter-examples:
+        %* lots; see git.git and linux.git.  unlikely with central server and
+        %  merge-to-mainline workflow
+        %* follow-on assumption: merge-base can be constructed by just merging
+        %  the others together (counter-examples: conflicts, including crazy types)
+        %* follow-on assumption: we can find something meaningful to use as a
+        %  merge-base and construct it as a tree (maybe...)
+      \end{myitemize}\vspace*{-0.3\baselineskip}
+    \item File versions
+      \begin{myitemize}\scriptsize
+        \item Three versions of each file exist%; counter-examples:
+          %* one version
+          % * existed in base \& deleted on both sides
+          % * new file unique to one side (possible D/F conflict...)
+          %* two versions
+          %  * didn't exist in base; add/add conflict unless identical
+          %  * did exist in base: modify/delete unless unmodified
+          %* more than three versions: (see combination effects)
+        \item The three versions of the file have same pathname
+          %* whoo, boy, this is a big can of worms
+        \item If there are three versions of pathname, they're related%; counter-examples:
+          %* simple rename/modify (use O,A,B notation to show modify/delete+add)
+          %* one renamed away, with new file in place
+          %* one file deleted, new file now in its place
+          %* swap rename (a->b, b->a)
+          %* (This could get really complicated, but git doesn't do break detection
+          %   for merges, so not relevant right now)
+          \end{myitemize}\vspace*{-0.3\baselineskip}
+    \item Chunks of lines (e.g. functions) do not move between files
+      %* git handles this in blame, but not for merges.  At least not yet.
+  \end{myitemize}\vspace*{-0.3\baselineskip}
+
+  Subtle assumptions:\\[-0.5\baselineskip]
+  \begin{myitemize}
+    \item Path for a file is writable %(whoops)
+    \item No nesting of conflict markers %(ha!)
+    \item Conflicts representable on disk
+      %(oops: modify/delete, D/F, submodule/file,
+      %submodule/directory, submodule/submodule, rename/rename(1to2), directory
+      %rename detection issues)
+  \end{myitemize}\vspace*{-0.3\baselineskip}
+
+  Implementation limits:\\[-0.5\baselineskip]
+  \begin{myitemize}
+    \item Dirty changes
+    \item Rename heuristics
+    \item Writing intermediate file-merges to object store immediately
+  \end{myitemize}
+
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Directory rename detection}
+\begin{frame}
+  \frametitle{Directory rename detection}
+
+  More fun:
+  \begin{itemize}[<+->]
+    \item Splitting a directory into two (or more)
+    \item ``Partial'' directory rename
+
+    \item Transitive renaming
+    \item rename/rename(2to1), but only due to transitive rename
+    \item Multiply transitive renames
+
+    \item Don't apply other side's rename if we did the same rename
+
+    \item Files/directories in the way of subset of to-be-renamed paths
+
+    \item Instead of rename, merge a directory with another
+    \item N-to-1 directory merge
+
+    \item Nested directory also renamed (and outside of parent)
+    \item Dual directory rename, one into the other's way
+    \item Renaming directory and basenames of each file within it
+    \item Renamed directory contained subdirs (possibly also renamed), not files
+
+  \end{itemize}
+
+\end{frame}
+
+\end{document}

@@ -1,0 +1,113 @@
+Discussion points:
+  * Fetch response CDN offloading (Jonathan Tan)
+    * allows resumable cloning
+    * does load balancing
+    * gets the static part of history (e.g. until a week ago) from CDN, and
+      last bits from "main" server
+    * questions about whether to do multiple bits offloaded (e.g. almost
+      full clone, only stuff from last month, etc.); can server keep track of
+      manifest and direct client to necessary subset of pack on a CDN?
+  * A review of "Big"
+    * references, history, wide-checkout, deep-checkout, lots to gc, etc.
+    * newer stuff: partial clones, worktrees, commit-graph
+    * plan to do a breakout session later
+  * NewHash
+    * sha1 -> sha256
+    * have sha256 repo locally talking to a server using sha1?
+    * as of yesterday, binary that can create either sha1 or sha256 repos
+    * will be using fixed length listing of shas in packfile; if given sha1
+      is fourth in list, then the corresponding sha256 will be fourth
+    * next: interoperation; fetch & push coming up next
+    * done a fair amount of work so moving to a new hash in the future with
+      a different length should be much less work
+    * no automatic translation of commit messages, but maintenance of
+      dual-mapping of hashes
+    * (Comments on sha1dc & its performance)
+    * Submodules is the biggest issue right now
+  * Poll: prove vs. jumbled output
+    * some people didn't set up prove; some attempts to avoid perl on windows
+    * nearly everyone using prove; could switch to it as the default
+  * Poll: where should Git Merge be next year?
+    * will bring up on list, but Canada is at least an option
+    * North America is more likely to get Junio to come
+    * I tried to push for North America...
+  * Using mailmap by default in git log?
+    * People change names for lots of reasons (including
+transliteration differences)
+    * Keep an option to not use mailmap
+    * People generally positive on the idea
+  <Lunch>
+  * fetch response sideband-all
+    * sidebands for progress messages and errors
+    * sideband currently limited to when sending packfile
+    * proposal: expand sideband for whole response, not just packfile.
+    * particularly useful given ideas to do CDN
+    * also needed for keep-alive messages
+    * this will be a negotiated new capability (can't do it backward-compatibly)
+  * protocol v2 for push
+    * ref advertisement the main issue
+    * would like to be able to modify the commit message (?!?)
+      * rebase-on-push
+      * reformat-on-push
+    * discussion of how to split messages up into sub-commands
+    * a way to retry pushes without re-pushing everything (e.g. someone else
+      updated the branch, you then re-merged or rebased locally and want to
+      push again, meaning the server already has _most_ the objects but just
+      needs a few new ones)
+  * partial clones
+    * doing work to have multiple remotes (also ties in to CDN usage)
+    * still very tied to having a server around to request additional objects
+    * we need to have a way to keep upload-pack open and do multiple requests
+    * has some ability to filter trees, but we need them for now for index
+      * Matthew Devore doing some work in this area right now, but it appears
+        to be based on depth rather than width?
+    * connection with sparse checkout is kind of hacky right now
+    * there are reachability enforcement issues in V2, which becomes even more
+      of an issue with partial clones (now need to worry about blobs not just
+      commits)
+    * in a partial clone world, server can't gc
+    * sidenote: dumb http support
+      * no major hosting provider supports it
+      * some people like it due to resumability (e.g. Joey Hess & git annex)
+      * cgit provides dumb http support natively
+    * questions I had in area: getting list of initial files of interest...
+                               gluing together with sparse checkout
+                               partial indexes
+  <break; talked with Michael H. & Thomas G.: saving incomplete merge state, filter-repo, checkout overlay>
+  * breakouts: merging, GSoC, structured logging, windows big files; I
+was in "merge"
+    * merge-recursive rewrite
+      * questions and basic explanation of how the algorithm works
+      * want incremental updates on merge-recursive rewrite
+      * make merge-recursive code part of libgit.a ?
+      * people are very happy about idea to not touch the working tree
+    * make rebase --merge the default
+      * use performance tests to see how well it compares (p3400-rebase.sh)
+      * may later also reimplement the am-specific flags on top of interactive
+    * make use of best merge bases in more places (e.g. git diff A...B uses a
+      suboptimal one)
+    * rebase --rebase-merges:
+      * doing a five-way merge rewriting xdiff to handle five instead of three
+        file versions
+      * M merges A & B
+      * M' should like like a merge of A' and B', but really involved in a
+        five way merge of A', A, M, B, B' -- and that is necessary in order
+        to get evil merge represented
+  * overview of "Big"
+    * git-sizer (funny: git-lab asks users to run it and return results; github
+      runs it for user and shows them the results)
+    * large blobs, partial clones
+    * partial or hierarchical indexes
+  * CI
+    * Dscho has a lot of machinery built up around Azure Pipelines
+    * PRs to github.com:gitgitgadget/git will automatically be built on
+      Windows, MacOS X, and linux
+    * Interest in getting emails for failures that their topic branch
+      caused (note: get topic author from tip commit author if not Junio)
+    * This may be able to move to github.com:git/git after Dscho's patches
+      merge down
+
+Stuff that had been mentioned but we didn't get to:
+state-of-the-union, commit-graph, evolve (we had the developer of the
+feature in mercurial present, but not the folks who had worked on the
+feature in git), git filter-repo, maybe a few others I'm forgetting.

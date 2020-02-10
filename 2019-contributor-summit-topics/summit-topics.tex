@@ -1,0 +1,376 @@
+\documentclass[t]{beamer}
+
+\usetheme{default}
+\setbeamertemplate{navigation symbols}{}
+
+%\mode<presentation>
+%{
+%  \usetheme{Warsaw}
+%  % or ...
+%
+%  \setbeamercovered{transparent}
+%  % or whatever (possibly just delete it)
+%}
+
+
+\usepackage[english]{babel}
+% or whatever
+
+\usepackage[latin1]{inputenc}
+% or whatever
+
+\usepackage{times}
+\usepackage[T1]{fontenc}
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
+
+
+%\usepackage{verbatim}
+\usepackage{colortbl}
+
+ %\newrgbcolor{hilight}{0.000 1.000 0.000}   % green
+ %\xdefinecolor{hilight}{rgb}{0.000 1.000 0.000} % green
+ \newcommand{\hilight}{\color{blue}}
+ \xdefinecolor{MyGreen}{rgb}{0.000, 0.500, 0.000} % green
+ \newcommand{\nonliteral}{\color{MyGreen}}
+
+\title{2019 Git Contributor Summit -- Topics}
+
+\author{Elijah Newren}
+\institute{Palantir Technologies}
+
+\date{2019-02-05}
+
+\subject{Talks}
+% This is only inserted into the PDF information catalog. Can be left
+% out. 
+
+
+
+% If you have a file called "university-logo-filename.xxx", where xxx
+% is a graphic format that can be processed by latex or pdflatex,
+% resp., then you can add a logo as follows:
+
+% \pgfdeclareimage[height=0.5cm]{university-logo}{university-logo-filename}
+% \logo{\pgfuseimage{university-logo}}
+
+
+
+% If you wish to uncover everything in a step-wise fashion, uncomment
+% the following command: 
+
+%\beamerdefaultoverlayspecification{<+->}
+
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Overview}
+
+\begin{frame}
+  \frametitle{Setup}
+
+  \begin{itemize}
+    \item 30-40 people
+    \begin{itemize}
+      \item I got to put lots of faces to names
+      \item Had many top contributors, but definitely not all of them
+    \end{itemize}
+    \item Big projects \& companies represented:
+      \begin{itemize}
+        \item GitHub, GitLab, Atlassian, Gerrit, Microsoft, Google
+      \end{itemize}
+    \item Peff's comment on merge work
+  \end{itemize}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Overview}
+
+  \begin{itemize}
+    \item Fetch response \& CDN offloading
+    \item A review of "Big"
+    \item NewHash
+    \item Poll: prove vs. jumbled output
+    \item Poll: where should Git Merge be next year?
+    \item Using mailmap by default in git log?
+    \item Fetch response sideband-all
+    \item Protocol v2 for push
+    \item Partial Clones
+    \item Informal Break discussions
+    \item Breakout Sessions
+    \item CI
+  \end{itemize}
+
+\end{frame}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Topics}
+
+\begin{frame}
+  \frametitle{Stuff we missed}
+
+  \begin{itemize}
+    \item commit-graph
+    \item multi-pack-index
+    \item reftable
+    \item test coverage report
+    \item git filter-repo
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Fetch response \& CDN offloading}
+
+  \begin{itemize}
+    \item allows resumable cloning
+    \item does load balancing
+    \item gets the static part of history (e.g. until a week ago) from CDN, and
+      last bits from "main" server
+    \item questions about whether to do multiple bits offloaded (e.g. almost
+      full clone, only stuff from last month, etc.); can server keep track of
+      manifest and direct client to necessary subset of pack on a CDN?
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{A review of "Big"}
+
+  \begin{itemize}
+    \item references, history, wide-checkout, deep-checkout, lots to gc, etc.
+    \item newer stuff: partial clones, worktrees, commit-graph
+    \item originally planned to do a breakout session later, but...
+    \item git-sizer (usage by GitLab vs. GitHub)
+    \item large blobs, partial clones
+    \item partial or hierarchical indexes
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{NewHash}
+
+  \begin{itemize}
+    \item sha1 -> sha256
+    \item have sha256 repo locally talking to a server using sha1?
+    \item as of yesterday, binary that can create either sha1 or sha256 repos
+    \item will be using fixed length listing of shas in packfile; if given sha1
+      is fourth in list, then the corresponding sha256 will be fourth
+    \item next: interoperation; fetch \& push coming up next
+    \item done a fair amount of work so moving to a new hash in the future with
+      a different length should be much less work
+    \item no automatic translation of commit messages, but maintenance of
+      dual-mapping of hashes
+    \item (Comments on sha1dc \& its performance)
+    \item Submodules is the biggest issue right now
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Poll: prove vs. jumbled output}
+
+  %\begin{itemize}
+  %  \item some people didn't set up prove; some attempts to avoid perl on windows
+  %  \item nearly everyone using prove; could switch to it as the default
+  %\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Poll: where should Git Merge be next year?}
+
+  %\begin{itemize}
+  %  \item will bring up on list, but Canada is at least an option
+  %  \item North America is more likely to get Junio to come
+  %  \item I tried to push for North America...
+  %\end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Using mailmap by default in git log?}
+
+  \begin{itemize}
+    \item People change names for lots of reasons (including transliteration
+          differences)
+    \item Keep an option to not use mailmap
+    \item People generally positive on the idea
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Fetch response sideband-all}
+
+  \begin{itemize}
+    \item sidebands for progress messages and errors
+    \item sideband currently limited to when sending packfile
+    \item proposal: expand sideband for whole response, not just packfile.
+    \item particularly useful given ideas to do CDN
+    \item also needed for keep-alive messages
+    \item this will be a negotiated new capability (can't do it
+          backward-compatibly)
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Protocol v2 for push}
+
+  \begin{itemize}
+    \item ref advertisement the main issue
+    \item Some want to modify the commit server-side (?!?!?)
+    \begin{itemize}
+      \item tweak the commit message somehow
+      \item rebase-on-push
+      \item reformat-on-push
+    \end{itemize}
+    \item discussion of how to split messages up into sub-commands
+    \item a way to retry pushes without re-pushing everything (e.g. someone
+      else updated the branch, you then re-merged or rebased locally and want
+      to push again, meaning the server already has \textit{most} the objects
+      but just needs a few new ones)
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Partial Clones}
+
+  \begin{itemize}
+    \item doing work to have multiple remotes (related: CDN usage)
+    
+    \item still very tied to having a server around to request
+      additional objects
+      
+    \item we need to have a way to keep upload-pack open and do
+      multiple requests
+      
+    \item has rudimentary ability to filter trees
+    \begin{itemize}
+      \item Matthew Devore doing some work in this area right now, but it
+            appears to be based on depth rather than width?
+    \end{itemize}
+    \item connection with sparse checkout is kind of hacky right now
+    \item there are reachability enforcement issues in V2, which becomes even
+      more of an issue with partial clones (now need to worry about blobs not
+      just commits)
+    \item in a partial clone world, server can't gc
+    \item sidenote: dumb http support
+    \begin{itemize}
+      \item no major hosting provider supports it
+      \item some people like it due to resumability (e.g. Joey Hess \& git
+            annex)
+      \item cgit (repo browser) provides dumb http support natively
+    \end{itemize}
+    %\item questions I had in area: getting list of initial files of interest...
+    %                           gluing together with sparse checkout
+    %                           partial indexes
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{CI}
+
+  \begin{itemize}
+    \item Folks aren't all that happy with the Travis setup
+    \item Dscho has a lot of machinery built up around Azure Pipelines
+    \item PRs to github.com:gitgitgadget/git will automatically be built on
+      Windows, MacOS X, and linux
+    \item Interest in getting emails for failures that their topic branch
+      caused (note: get topic author from tip commit author if not Junio)
+    \item This may be able to move to github.com:git/git after Dscho's patches
+      merge down
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Breakout Sessions}
+
+  Four simultaneous breakout sessions were held:
+  \begin{itemize}
+    \item merging
+    \item GSoC
+    \item structured logging
+    \item windows big files
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Breakout Session: merging}
+
+  I led the breakout session on merging
+  \begin{itemize}
+    \item merge-recursive rewrite
+      \begin{itemize}
+      \item questions and basic explanation of how the algorithm works
+      \item want incremental updates on merge-recursive rewrite
+      \item make merge-recursive code part of libgit.a ?
+      \item people are very happy about idea to not touch the working tree
+      \end{itemize}
+    \item make rebase {-}{-}merge the default
+      \begin{itemize}
+      \item use performance tests to see how well it compares (p3400-rebase.sh)
+      \item may later also reimplement the am-specific flags on top of
+        interactive
+      \end{itemize}
+    \item make use of best merge bases in more places (e.g. git diff A...B uses
+          a suboptimal one)
+    \item rebase {-}{-}rebase-merges; more thorough reimplementation ideas
+    
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Informal Break discussions}
+
+  \begin{itemize}
+    \item saving incomplete merge state
+    \item checkout overlay
+    \item filter-repo
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
