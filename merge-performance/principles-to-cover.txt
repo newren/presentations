@@ -1,0 +1,63 @@
+* See also
+  * presentations/rename-cherry-pick-demo/lots-o-renames.pdf
+  * presentations/how-merge-works/how-merge-works.pdf
+    (latter has improved early slides over the former)
+
+* Early explanations
+  * (Work from years ago and Peff and I's standoff over who would rewrite?)
+  * Original problem at Palantir that motivated my return
+  * Peff's & Junio's opinions of merge-recursive.c
+  * Purposes of my rewrite
+    * Maintainability/understandability
+    * Correctness
+    * Performance
+    * Improved API & New Features
+  * Division of work
+    * builtin/merge.c (which strategy -- ff, octopus, normal; commit, diffstat)
+    * merge-recursive.c (default strategy and main engine; plumbs
+      stuff together, finding merge base(s), path-based conflicts
+      (e.g. directory/file, modify/delete), and mode-based conflicts
+      (symlink vs submodule), and renames.
+    * ll-merge.c (thin xdl_merge wrapper; heeds path-specific .gitattributes
+      such as special drivers or normalization)
+    * xdiff/xmerge.c (actual content merging)
+
+* Amusing
+
+  * Title: Git Merge -> (git merge)^2   [Talking about git merge at Git Merge]
+
+  * "This work represents my attempt to continue to not believe them."
+
+  * "This is not one of those talks"
+    * Ideal performance talk
+      * Maximizing the machine performance
+      * Applying ideas from other fields to new areas
+      * Algorithmic research
+    * This performance talk
+      * Don't do unnecessary work
+      * Don't redo work
+      * Don't redo unnecessary work
+      * Fudge "unnecessary"
+      * Avoid unnecessary O(N^2) algorithms
+
+Savings:
+  * Avoiding rework based on understanding the algorithm:
+    * hash comparison for exact renames (and not throwing away that work)
+    * remove source file from comparisons if other side didn't modify
+    * use file basename to avoid exhaustive O(N^2) comparison
+    * re-use rename information while rebasing or cherry-picking
+    * trivial tree merges (all match) and partial merges (side match)
+    * avoid (dir) rename detection when traversal paths shows it's unnecessary
+      (no directory removed, or none added: no dir rename)
+    * avoid updating the index or working tree if not needed (esp. in rebase)
+  * Brute force avoid unnecessary work or rework:
+    * tree traversals (old: {unpack:1(3), unique:2, diff:2(4),
+                             get_tree_entry:3*2*unmerged_entries},
+                       new: {basic:1(3-partial), unpack:1(2)})
+    * repeatedly drop & reload cache (sometimes not necessary at all)
+    * avoid re-comparing hashes (unpack_trees did it once, then we repeated)
+    * memoize not-found results from previous runs of check_dir_renamed()
+      (store dir_renames + non-renames in a strmap)
+  * Avoid O(N^2):
+    * The idea behind remove_marked_cache_entries(); not used by merge-recursive
+    * string_list_insert (see NOTE in string-list.h)

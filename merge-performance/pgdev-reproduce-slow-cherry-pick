@@ -1,0 +1,15 @@
+git checkout 3.13.4.3-enterprise_patching
+git fetch origin refs/changes/30/289530/3
+git -c merge.renameLimit=1 cherry-pick FETCH_HEAD
+
+
+$ time git cherry-pick FETCH_HEAD
+...
+warning: you may want to set your merge.renamelimit variable to at least 48941 and retry the command.
+...
+real	0m13.259s
+
+$ time git -c merge.renameLimit=48941 cherry-pick FETCH_HEAD
+Performing inexact rename detection: 100% (2836767183/2836767183), done.
+...
+real	9m14.820s

@@ -1,0 +1,77 @@
+* Overview
+
+...blah blah explanation of problem ...
+Some might say, "the fundamental problem is quadratic in nature,
+there's nothing you can do to meaningfully affect performance."
+
+* TLDR
+
+Here are four key insights that allow us to meaningfully affect[1] the
+performance of git merge despite having a quadratic component like
+rename detection:
+
+  * You can artificially inflate 'N' (add extra files to check) in the
+    quadratic component in order to dramatically degrade performance.
+
+  * You can modify other parts of the code from loglinear to quadratic
+    to slightly but measurably degrade overall performance.
+    
+  * O(1) is not optimal; O(0) is.
+
+  * Find an algorithm that solves a different problem, but does so
+    faster; use it instead.
+
+You may laugh at my use of "affect" instead of "improve", but I will
+actually show how I used all four of these insights to improve
+performance.
+
+* More generic detail?
+
+In any discussion of performance, one is always going to see [Big O
+notation](https://en.wikipedia.org/wiki/Big_O_notation) used and
+everyone will remember their undergraduate days of spotting, for
+example, either brute force or accidental quadratic implementations
+that can be replaced with loglinear or linear algorithms.  Finding
+algorithms in a codebase that scale inefficiently and replacing them
+with a more efficient algorithm is often the first thing done to try
+to improve performance.
+
+But even at this level there is a step that is often overlooked.  For
+example, if someone tells you they are trying to improve algorithms in
+their codebase to move as far right on the following scale:
+  O(n^2) -> O(n log n) -> O(n) -> O(log n) -> O(1)
+can you spot what they are missing?  It is something that is
+overlooked a surprising number of times in both large and not-so-large
+codebases from all kinds of domains.  There's something even further
+to the right, which I like to call O(0).  If you don't need to perform
+the calculation, just don't do it.  People don't usually put useless
+code in place to start with, but refactoring, changes to requirements,
+calling an existing function because part of what it does is to
+compute something you want, etc. often lead to a situation where
+unnecessary work takes up a significant chunk of overall computation
+time.
+
+Another way to affect performance is in an area falls more in the area
+of art than science.  Perhaps there is no existing algorithm to solve
+the given problem any faster, but there is a faster algorithm to solve
+a different problem.  If that other problem is deemed "close enough",
+or through some creative changes can be made close enough for the
+particular problem space of concern, then the faster algorithm can be
+used.  [Fast invert square
+root](https://en.wikipedia.org/wiki/Fast_inverse_square_root) is a
+famous example of this.
+
+* Start diving into examples
+
+  * sha1sum comparison for 100% renames (different algorithm)
+  * but, whoops, copy detection wasted that optimization (reduce N)
+  * avoid unnecessary string list lookups (more a micro optimization?)
+  * remove source file from comparisons if other side of history didn't modify
+    (reduce N massively)
+  * filter rename_src list (reduce N, kind of)
+  * use file basename to avoid comparing exhaustively (reduce N)
+  * avoid unnecessary work: trivial tree merges
+  * avoid O(N^2) index removals part 1: let unpack_trees do more trivial cases
+  * avoid O(N^2) index removals part 2: smarter index removal handling
+  * avoid O(N), part 1: don't load or store index in bare-tree merge
+  * avoid O(N), part 2: store and use partial indexes (proof of concept only)

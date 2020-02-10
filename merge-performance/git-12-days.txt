@@ -1,0 +1,12 @@
+Day 1: ort, correct basic design (in memory resolve, then update index/worktree)
+Day 2: correctness, submodules
+Day 3: correctness, more conflict types
+Day 4: correctness, ambiguous renaming handling
+Day 5: perf, rename detection -- smarter implementation (3 old things; maybe split?)
+Day 6, perf, rename detection -- handle directories better (basename pref.)
+Day 7: perf, smarter index update (not O(N^2))
+Day 8: perf, partial index (for when no index/worktree update needed)
+Day 9: perf, in-memory rebase (avoiding intermediate disk serialization)
+Day 10: feature, -X mas
+Day 11: feature, modified diff3
+Day 12: feature, remerge-diff

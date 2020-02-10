@@ -1,0 +1,20 @@
+From linux.git (and maybe also elsewhere):
+
+Read-only:
+  - For non-merge commits:
+    - Average number of files modified in a non-merge commit
+  - For 2-parent merge commits:
+    - Minimum number of unique commits to either side
+    - Total number of diverging commits (or divide by 2 to get average)
+    - Average number of file changes per side
+    - Percentage where either side has a rename
+    - Percentage of above where no renamed file touched by other side
+    - Average percentage of renamed files touched by other side
+  - Other
+    - What's the longest sequence of non-merge commits merged? (Use for rebase)
+    - 
+
+Making new changes:
+  - If one-commit branches both changed all files (no conflicts), how long would merge take?
+  - How long to rebase long sequence of commits on top of trivial change?
+  - How long to rebase long sequence of commits on top of directory rename?
