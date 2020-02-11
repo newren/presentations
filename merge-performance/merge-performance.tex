@@ -17,7 +17,7 @@
 \tikzstyle{specialRef}=[black!50,rectangle,draw=black!50,fill=black!10]
 \tikzstyle{msg}=[tape,tape bend top=none,draw=MyRed!50,fill=MyRed!20]
 \tikzstyle{prnt}=[thick,-stealth']
-\tikzstyle{oprnt}=[black!50,thick,-stealth',draw=black!50]
+\tikzstyle{oprnt}=[black!50,dotted,-stealth',draw=black!50]
 \tikzstyle{bptr}=[thick,-latex']
 \tikzstyle{nextmsg}=[thick,-open triangle 45]
 \newcommand{\parent}[1]{\char94{#1}}
@@ -299,6 +299,191 @@
       looking at the contents of the file.
       
     }
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Basic Merging}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Three-way Merging}
+
+  \cl{git checkout master}\\
+  \cl{git merge feature}\\[0.5em]
+
+  \uncover<3->{
+  Get three relevant trees}\uncover<4->{, then for each path:
+  \begin{itemize}
+    \item Get version of path in each tree
+    \item Do three-way content merge
+  \end{itemize}
+  }
+
+  %\only<1| handout:1>{Initial state:}
+  %\only<2| handout:2>{\cl{git fetch}}
+  %\only<3-4| handout:3>{\cl{git merge origin/master}}
+  %\only<5| handout:4>{\cl{git push}}
+  \vspace*{-1.5em}
+
+  \pause
+  \begin{center}
+    \begin{minipage}{0.5\textwidth}
+    \begin{block}{Merge}
+      \begin{tikzpicture}[node distance=10mm]
+        \only<2->{
+          \node[commit] (Z) {Z};
+        }
+        \only<2,6>{
+          \node[commit] (Y)  [right of=Z] {Y};
+          \node[commit] (W)  [right of=Y] {W};
+          \node[commit] (X)  [below right of=Z,yshift=-1em] {X};
+        }
+        \only<3-5>{
+          \node[orphanCommit] (Y)  [right of=Z] {Y};
+          \node[orphanCommit] (W)  [right of=Y] {W};
+          \node[orphanCommit] (X)  [below right of=Z,yshift=-1em] {X};
+        }
+        \only<2->{
+          \node[commit] (V)  [right of=W] {V};
+          \path[prnt] (V) edge (W);
+          \path[prnt] (W) edge (Y);
+          \path[prnt] (Y) edge (Z);
+
+          \node[commit] (U)  [right of=X] {U};
+          \path[prnt] (U) edge (X);
+          \path[prnt] (X) edge (Z);
+
+          \node[ref]    (f) [below of=U] {feature};
+          \path[bptr] (f) edge (U);
+          \node[ref]    (m)  [above of=V] {master};
+        }
+
+        \only<2-5| handout:1>{
+          \path[bptr] (m) edge (V);
+        }
+        \only<5>{
+          \node[redCommit] (T)  [right of=V] {T};
+        }
+        \only<6>{
+          \node[commit] (T)  [right of=V] {T};
+        }
+        \only<5-| handout:2-3>{
+          \path[prnt] (T) edge (V);
+          \path[prnt] (T) edge[bend left] (U);
+        }
+        \only<6>{
+          \path[bptr] (m) edge (T);
+        }
+      \end{tikzpicture}
+    \end{block}
+    \end{minipage}
+  \end{center}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Three-way Merging}
+
+  \cl{git checkout master}\\
+  \cl{git cherry-pick X..feature}\\[0.5em]
+
+  \vspace*{-1.5em}
+  \begin{center}
+    \begin{minipage}{0.5\textwidth}
+    \begin{block}{
+        \only<1>{Starting state}
+        \only<2-4>{Picking U}
+        \only<5>{Picked U}
+        \only<6-8>{Picking T}
+        \only<9>{Picked T}
+        \only<10->{Cherry picking complete}
+        \phantom{Cg}% To make sure all titles have the same height
+        }
+      \begin{tikzpicture}[node distance=10mm]
+        \only<1->{
+          \node[commit] (Z) {Z};
+          \node[commit] (Y)  [right of=Z] {Y};
+          \node[commit] (W)  [right of=Y] {W};
+          \node[commit] (V)  [right of=W] {V};
+          \node[commit] (X)  [below right of=Z,yshift=-1em] {X};
+          \node[commit] (U)  [right of=X] {U};
+          \node[commit] (T)  [right of=U] {T};
+        }
+        \only<3-7>{
+          \node[orphanCommit] (Z)  {Z};
+          \node[orphanCommit] (Y)  [right of=Z] {Y};
+          \node[orphanCommit] (W)  [right of=Y] {W};
+          \node[orphanCommit] (T)  [right of=U] {T};
+        }
+        \only<1->{
+          \path[prnt] (V) edge (W);
+          \path[prnt] (W) edge (Y);
+          \path[prnt] (Y) edge (Z);
+
+          \path[prnt] (T) edge (U);
+          \path[prnt] (U) edge (X);
+          \path[prnt] (X) edge (Z);
+
+          \node[ref]  (f) [below of=T] {feature};
+          \path[bptr] (f) edge (T);
+          \node[ref]  (m) [above of=V] {master};
+        }
+
+        \only<1-9| handout:1>{
+          \path[bptr] (m) edge (V);
+          %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
+          %\path[bptr] (h) edge (m);
+        }
+        \only<4>{
+          \node[redCommit] (US) [right of=V, xshift=0.1em] {U$^*$};
+          \path[oprnt] (US) edge[bend left] (U);
+        }
+        \only<4-| handout:2-3>{
+          \path[prnt] (US) edge (V);
+        }
+        \only<5->{
+          \node[commit] (Z) {Z};
+          \node[commit] (Y)  [right of=Z] {Y};
+          \node[commit] (W)  [right of=Y] {W};
+          \node[commit] (US) [right of=V, xshift=0.1em] {U$^*$};
+          \node[commit] (U)  [right of=X] {U};
+          \node[commit] (T)  [right of=U] {T};
+        }
+        \only<7-8>{
+          \node[orphanCommit] (Z) {Z};
+          \node[orphanCommit] (Y)  [right of=Z] {Y};
+          \node[orphanCommit] (W)  [right of=Y] {W};
+          \node[orphanCommit] (V)  [right of=W] {V};
+          \node[orphanCommit] (X)  [below right of=Z,yshift=-1em] {X};
+        }
+        \only<8>{
+          \node[redCommit] (TS) [right of=US, xshift=0.3em] {T$^*$};
+          \path[oprnt] (TS) edge[bend left] (T);
+        }
+        \only<9->{
+          \node[commit] (TS) [right of=US, xshift=0.3em] {T$^*$};
+        }
+        \only<8-| handout:2-3>{
+          \path[prnt] (TS) edge (US);
+        }
+        \only<10-| handout:1>{
+          \path[bptr] (m) edge[bend left] (TS);
+          %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
+          %\path[bptr] (h) edge (m);
+        }
+      \end{tikzpicture}
+    \end{block}
+    \end{minipage}
+  \end{center}
+
+  \only<11>{
+  Rebasing and reverting are handled similarly to cherry-picking.
   }
 
 \end{frame}
