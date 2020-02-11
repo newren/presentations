@@ -65,7 +65,7 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section[Scope]{Scope}
+\section[Scope]{``Merge machinery'' scope and plans}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{comment}
@@ -94,9 +94,9 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Engine}
+\subsection{Affected Commands}
 \begin{frame}
-  \frametitle{Applicability}
+  \frametitle{Affected Commands}
 
   The merge machinery (merge-recursive) powers several aspects of git:
 
@@ -114,33 +114,36 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Quotes}
+\subsection{Redesign/Rewrite}
 \begin{frame}
-  \frametitle{Starting Point}
+  \frametitle{Quotes}
 
-  Quotes:
+  The two most prolific authors of git opining on merge-recursive:
 
+  \only<2->{
   \begin{itemize}
 
-    \item ``merge-recursive [is] some pretty hairy code.  Every time I
+    \item ``[It is] some pretty hairy code.  Every time I
             start to look at it I get confused and can't remember what
             breakthrough I thought I was close to making before.''
             %
-            \href{https://public-inbox.org/git/20110616210551.GA15505@sigill.intra.peff.net/}{[Peff]}
+            \href{https://public-inbox.org/git/20110616210551.GA15505@sigill.intra.peff.net/}{(Jeff King)}
 
+    \only<3>{
     \item ``I've written off that code as mostly unsalvageable long
             time ago.''
-          \href{https://public-inbox.org/git/xmqqk1ydkbx0.fsf@gitster.mtv.corp.google.com/}[Junio]
+          \href{https://public-inbox.org/git/xmqqk1ydkbx0.fsf@gitster.mtv.corp.google.com/}{(Junio Hamano)}
+    }
 
   \end{itemize}
+  }
 
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Rewrite}
 \begin{frame}
-  \frametitle{Redesign/rewrite}
+  \frametitle{Goals}
 
   Goals for my rewrite of the machinery:
   \begin{itemize}
@@ -154,30 +157,42 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Performance}
+\subsection[Perf Strategies]{Performance Strategies}
 \begin{frame}
-  \frametitle{Performance}
+  \frametitle{Performance Strategies}
 
   \only<1-6>{
   I have always enjoyed performance talks; they make me feel smarter:
-  \begin{itemize}[<+(1)->]
-    \item Maximizing the machine performance
-    \item Applying ideas and algorithms from other problem domains to new areas
-    \item Algorithms with clever approximations which nearly solve the problem
+  \only<2->{
+  \begin{itemize}
+    \item Squeezing performance out of the hardware
+    \only<3->{
+    \item Applying ideas from other problem domains to new areas
+    \only<4->{
+    \item Algorithms with clever approximations providing near solutions
+    \only<5->{
     \item Inventing new algorithms
+    }}}
   \end{itemize}
   \only<6>{This is not one of those talks.}
-  }
+  }}
 
   \only<7->{
-  \begin{itemize}[<+(8)->]
+  Actual performance strategies used:
+  \only<8->{
+  \begin{itemize}
+    \item Avoid well-known slow constructs
+    \only<9->{
     \item Don't do unnecessary work
+    \only<10->{
     \item Don't redo work
+    \only<11->{
     \item Don't redo unnecessary work
+    \only<12->{
     \item Fudge "unnecessary"
-    \item Avoid unnecessary O($N^2$) algorithms
+    }}}}
   \end{itemize}
-  }
+  }}
 
 \end{frame}
 
