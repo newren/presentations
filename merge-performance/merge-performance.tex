@@ -233,7 +233,7 @@
 
   \vspace*{-\baselineskip}
   \begin{multicols}{2}
-    File from branch A:\\
+    File from branch Side1:\\
     {\footnotesize\texttt{%
     %\vspace*{-0.125\baselineskip}%
     \quad{}...                             \\
@@ -245,7 +245,7 @@
     }}
     \columnbreak
     \pause
-    Same file from branch B:\\
+    Same file from branch Side2:\\
     {\footnotesize\texttt{%
     %\vspace*{-0.125\baselineskip}%
     \quad{}...                             \\
@@ -298,19 +298,19 @@
     \begin{multicols}{2}
       Shorthand:\\
       {\footnotesize\texttt{%
-      \hspace*{2.2em} path\\
-      \quad{}O: hash\_orig\\
-      \quad{}A: hash\_A\\
-      \quad{}B: hash\_B\\
+      \quad{}\phantom{Base1: }path\\
+      \quad{}Base\phantom{1}: hash\_orig\\
+      \quad{}Side1: hash\_A\\
+      \quad{}Side2: hash\_B\\
       }}
     \columnbreak
     \uncover<12->{
       Example:\\
       {\footnotesize\texttt{%
-      \hspace*{2.2em} buccaneer.c\\
-      \quad{}O: ba771ed\\
-      \quad{}A: 57abbed\\
-      \quad{}B: b1a57ed
+      \quad{}\phantom{Base1: }buccaneer.c\\
+      \quad{}Base\phantom{1}: ba771ed\\
+      \quad{}Side1: 57abbed\\
+      \quad{}Side2: b1a57ed
       }}
     }
     \end{multicols}%
@@ -523,10 +523,10 @@
   If a rename is not detected:\\
     {\footnotesize
     \begin{tabular}{lll}
-         & buccaneer.c  & viking.c  \\
-      O: & ba771e5      & 0000000 \\
-      A: & e5ca185      & 0000000 \\
-      B: & 0000000      & defea75 \\
+             & buccaneer.c  & viking.c  \\
+      Base:  & ba771e5      & 0000000 \\
+      Side1: & e5ca185      & 0000000 \\
+      Side2: & 0000000      & defea75 \\
     \end{tabular}
     }
 
@@ -571,10 +571,10 @@
     ...we can treat the two files as different versions of one file...\\
     {\footnotesize
     \begin{tabular}{ll}
-         & buccaneer.c $\Rightarrow$ viking.c   \\
-      O: & ba771e5 \\
-      A: & e5ca185 \\
-      B: & defea75 \\
+             & buccaneer.c $\Rightarrow$ viking.c   \\
+      Base:  & ba771e5 \\
+      Side1: & e5ca185 \\
+      Side2: & defea75 \\
     \end{tabular}
     }
    }
@@ -610,15 +610,15 @@
   \begin{center}
     {\footnotesize
     \begin{tabular}{l|l}
-      Files in O   &  Files in A  \\
+      Files in Base  &  Files in given side \\
       \hline
-      README.md    &  README.md   \\
-      archery.js   &  corrupt.js  \\
-      baseball.js  &  divine.js   \\
-      build.log    &  dull.js     \\
-      football.js  &  grand.js    \\
-      golf.js      &  lame.js     \\
-      running.js   &
+      README.md      &  README.md   \\
+      archery.js     &  corrupt.js  \\
+      baseball.js    &  divine.js   \\
+      build.log      &  dull.js     \\
+      football.js    &  grand.js    \\
+      golf.js        &  lame.js     \\
+      running.js     &
     \end{tabular}
     }
   \end{center}
