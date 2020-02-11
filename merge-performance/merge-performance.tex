@@ -65,29 +65,124 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section[Background]{Background}
-\subsection{Motivation}
+\section[Scope]{Scope}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}
-  \frametitle{Motivation}
-
-  Fame \& Glory
-
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{comment}
 \subsection{Division}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \begin{frame}
   \frametitle{Division}
 
-  20000 strong
+  \begin{itemize}[<+->]
+
+    \item xdiff/xmerge.c: 3-way content merging of a single file
+    \item ll-merge.c: thin xdl\_merge wrapper; heeds path-specific
+          .gitattributes such as special drivers or normalization
+
+    \item merge-recursive.c (default strategy and main engine): finds
+          and pre-merges merge-bases, handles path based-conflicts,
+          mode-based conflicts (e.g. symlink vs. submodule),
+          renames, and wires everything together.
+      % merge-recursive is about 2x the size of the other three pieces combined
+
+    \item builtin/merge.c: which strategy (octopus, fast-forward,
+          default), diffstat, etc.
+  \end{itemize}
+
+\end{frame}
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Engine}
+\begin{frame}
+  \frametitle{Applicability}
+
+  The merge machinery (merge-recursive) powers several aspects of git:
+
+  \begin{itemize}[<+->]
+    \item merge
+    \item cherry-pick
+    \item revert
+    \item rebase
+    \item am -3
+    \item stash
+    \item checkout -m
+  \end{itemize}
 
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Quotes}
+\begin{frame}
+  \frametitle{Starting Point}
+
+  Quotes:
+
+  \begin{itemize}
+
+    \item ``merge-recursive [is] some pretty hairy code.  Every time I
+            start to look at it I get confused and can't remember what
+            breakthrough I thought I was close to making before.''
+            %
+            \href{https://public-inbox.org/git/20110616210551.GA15505@sigill.intra.peff.net/}{[Peff]}
+
+    \item ``I've written off that code as mostly unsalvageable long
+            time ago.''
+          \href{https://public-inbox.org/git/xmqqk1ydkbx0.fsf@gitster.mtv.corp.google.com/}[Junio]
+
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Rewrite}
+\begin{frame}
+  \frametitle{Redesign/rewrite}
+
+  Goals for my rewrite of the machinery:
+  \begin{itemize}
+    \item Maintainability/understandability
+    \item Easier or more flexible API, enable new features
+    \item Correctness
+    \item Performance
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Performance}
+\begin{frame}
+  \frametitle{Performance}
+
+  \only<1-6>{
+  I have always enjoyed performance talks; they make me feel smarter:
+  \begin{itemize}[<+(1)->]
+    \item Maximizing the machine performance
+    \item Applying ideas and algorithms from other problem domains to new areas
+    \item Algorithms with clever approximations which nearly solve the problem
+    \item Inventing new algorithms
+  \end{itemize}
+  \only<6>{This is not one of those talks.}
+  }
+
+  \only<7->{
+  \begin{itemize}[<+(8)->]
+    \item Don't do unnecessary work
+    \item Don't redo work
+    \item Don't redo unnecessary work
+    \item Fudge "unnecessary"
+    \item Avoid unnecessary O($N^2$) algorithms
+  \end{itemize}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Background]{Background}
 \subsection{Content merge}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
