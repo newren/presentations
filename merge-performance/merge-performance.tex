@@ -172,45 +172,160 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Renames}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
-  \frametitle{Three-way content merge, cont.}
+  \frametitle{Renames}
 
-  git's sha1sum of individual files can be used for a shorthand:\\
-    {\footnotesize\texttt{%
-    \hspace*{0.6em} path\\
-    1:\ sha1sum(orig:path)\\
-    2:\ sha1sum(A:path)\\
-    3:\ sha1sum(B:path)\\[\baselineskip]
-    }}
+  If a rename is not detected:\\
+    {\footnotesize
+    \begin{tabular}{lll}
+         & buccaneer.c  & viking.c  \\
+      O: & ba771e5      & 0000000 \\
+      A: & e5ca185      & 0000000 \\
+      B: & 0000000      & defea75 \\
+    \end{tabular}
+    }
 
-  \pause
-
-  For example (using shortened shas here):\\
-    {\footnotesize\texttt{%
-    \hspace*{0.6em} angryp.swine-latin\\
-    1:\ 5ca1ab1e\\
-    2:\ f005ba11\\
-    3:\ b0a710ad\\[\baselineskip]
-    }}
-
-  \pause
-
-  Where the ordering is as follows:
-  {\footnotesize
-  \begin{enumerate}
-    \item merge base
-    \item HEAD (branch checked out before running merge)
-    \item other branch (the argument you passed to merge)
-  \end{enumerate}
+  \only<2->{
+    \vspace*{1em}
+    Then:
+    \begin{itemize}[<+(1)->]
+      \item buccaneer.c: modify/delete conflict
+      \item viking.c: totally new file
+      \item no textual merging
+    \end{itemize}
   }
 
-  \pause
-
-  \vspace*{0.5\baselineskip}
-  git makes these accessible...
+  \only<5->{
+    \vspace*{1em}
+    As reported by git:\\[0.5em]
+    {\footnotesize\texttt{%
+      \quad{}\$ git status\\
+      \quad{}...\\
+      \quad{}Unmerged paths:\\
+      \qquad{}	deleted by us:   buccaneer.c\\
+    }}
+  }
 
 \end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Renames}
+
+  \only<1->{
+    \vspace*{0.6em}
+    If we detect renames...\\
+    {\footnotesize
+    \qquad renames on side A: <omitted> \\
+    \qquad renames on side B: buccaneer.c $\Rightarrow$ viking.c, <others ommitted>\\
+  }}
+
+  \only<2->{
+    \vspace*{0.6em}
+    ...we can note these are different versions of one file...\\
+    {\footnotesize
+    \begin{tabular}{ll}
+         & buccaneer.c $\Rightarrow$ viking.c   \\
+      O: & ba771e5 \\
+      A: & e5ca185 \\
+      B: & defea75 \\
+    \end{tabular}
+    }
+   }
+
+  \only<3->{
+    \vspace*{0.6em}
+    ...and do a three-way content merge:\\[0.25em]
+    {\footnotesize\texttt{%
+      \quad{}speak\_like\_a\_pirate(arrrgs);\\
+      {\color{mygreen}
+      \quad{}<{}<{}<{}<{}<{}<{}< HEAD{\color{red}:buccaneer.c}  \\
+      \quad{}explore\_sea(aye, matey); \\
+      \quad{}=======\\
+      \quad{}explore\_sea(me.love[0]); \\
+      \quad{}>{}>{}>{}>{}>{}>{}> branchB{\color{red}:viking.c}\\
+      }
+      \quad{}shiver(me.timbers);\\
+    }}
+   }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Detection}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Detection}
+
+  How does git detect renames?  For each side...\\[0.25em]
+  \pause
+  \vspace*{-1.0\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l}
+      Files in O   &  Files in A  \\
+      \hline
+      README.md    &  README.md   \\
+      archery.js   &  corrupt.js  \\
+      baseball.js  &  divine.js   \\
+      build.log    &  dull.js     \\
+      football.js  &  grand.js    \\
+      golf.js      &  lame.js     \\
+      running.js   &
+    \end{tabular}
+    }
+  \end{center}
+  \vspace*{-1.5\baselineskip}
+
+  \pause
+  \vspace*{\baselineskip}
+  For each pair of files, what percentage of lines are identical?
+  \pause
+  \vspace*{-0.5\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l|l|l|l|l}
+                   & corrupt.js & divine.js & dull.js & grand.js & lame.js \\
+      \hline
+      archery.js   &&&&& \\
+      baseball.js  &&&&& \\
+      build.log    &&&&& \\
+      football.js  &&&&& \\
+      golf.js      &&&&& \\
+      running.js   &&&&&
+    \end{tabular}
+    }
+  \end{center}
+
+  \pause
+  {\small Note: I'm glossing over a few details and simplifying a bit here...}
+
+\end{frame}
+
+\begin{comment}
+  blind
+  %tiring
+  boring
+  %skillful
+  %dangerous
+  lame
+  rewarding
+  corrupt
+
+  archery
+  %basketball
+  baseball
+  %bowling
+  football
+  golf
+  running
+  %soccer
+\end{comment}
 
 \begin{comment}
 
