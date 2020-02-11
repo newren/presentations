@@ -198,9 +198,26 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section[Background]{Background}
-\subsection{Content merge}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\subsection{Warning}
+\begin{frame}
+  \frametitle{Warning}
+
+  \vfill
+  \begin{center}
+    \begin{minipage}{0.55\textwidth}
+    \begin{itemize}
+      \item Glossing over lots of details
+      \item Simplifications not fully accurate
+    \end{itemize}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Content merge}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
@@ -543,7 +560,7 @@
 
   \only<2->{
     \vspace*{0.6em}
-    ...we can note these are different versions of one file...\\
+    ...we can treat the two files as different versions of one file...\\
     {\footnotesize
     \begin{tabular}{ll}
          & buccaneer.c $\Rightarrow$ viking.c   \\
@@ -601,9 +618,9 @@
 
   \pause
   \vspace*{\baselineskip}
-  For each pair of files, what percentage of lines are identical?
+  For each pair of files, what percentage of lines are found in both?
   \pause
-  \vspace*{-0.5\baselineskip}
+  \vspace*{-0.25\baselineskip}
   \begin{center}
     {\footnotesize
     \begin{tabular}{l|l|l|l|l|l}
@@ -618,9 +635,6 @@
     \end{tabular}
     }
   \end{center}
-
-  \pause
-  {\small Note: I'm glossing over a few details and simplifying a bit here...}
 
 \end{frame}
 
