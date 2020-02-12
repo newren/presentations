@@ -807,25 +807,53 @@ static struct commit* merge_recursive_internal(...)
 
 \end{frame}
 
-\begin{comment}
-  blind
-  %tiring
-  boring
-  %skillful
-  %dangerous
-  lame
-  rewarding
-  corrupt
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Renames]{Rename Performance}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-  archery
-  %basketball
-  baseball
-  %bowling
-  football
-  golf
-  running
-  %soccer
-\end{comment}
+\subsection[Exact]{Exact renames}
+\begin{frame}[fragile]
+  \frametitle{Exact renames}
+
+  \vspace*{-1.5\baselineskip}
+  \begin{center}
+  \begin{minipage}{0.83\textwidth}
+  \begin{block}{Detecting renames}
+    {\scriptsize
+    \begin{semiverbatim}
+void detect_renames_and_copies(...)
+\{
+    ...\uncover<2->{{\color{blue}
+    exact_count = find_different_name_same_hash();   }\uncover<3->{{\color{red}
+    \only<1-3>{/* Keep all the source files as options for copies! */}   }}}
+    for (dest_path in potential_rename_targets) \{   \uncover<2->{{\color{blue}
+        if (already_paired(dest_path)) continue;   }}
+        for (source_path in potential_rename_sources) \{   \uncover<3->{\uncover<4->{{\color{green}
+            if (!DETECT_COPIES &&
+                already_paired(source_path))
+                continue;   }}}
+            compute_similarity();
+        \}
+    \}
+    ...
+\}  \end{semiverbatim}
+    }
+  \end{block}
+  \end{minipage}
+  \end{center}
+
+  \only<5->{
+    \vspace*{-0.25\baselineskip}
+    No sense wasting time trying to find a better match than a
+    100\% rename.
+  }
+
+  \only<6>{
+    \vspace*{-0.5\baselineskip}
+    Speed-up: varies; my first testcase saw a factor of 2.
+  }
+
+\end{frame}
 
 \begin{comment}
 
