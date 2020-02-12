@@ -65,7 +65,7 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section[Scope]{``Merge machinery'' scope and plans}
+\section[Rewrite]{``Merge machinery''}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{comment}
@@ -114,7 +114,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Redesign/Rewrite}
+\subsection[Redesign]{Redesign/Rewrite}
 \begin{frame}
   \frametitle{Quotes}
 
@@ -145,12 +145,17 @@
 \begin{frame}
   \frametitle{Goals}
 
-  Goals for my rewrite of the machinery:
+  Goals for my rewrite of the machinery are to improve each of:
   \begin{itemize}
     \item Maintainability \& understandability
-    \item Improved API, enable new features
+    \item API Quality (enable new features?)
     \item Correctness
+    \only<1>{
     \item Performance
+    }
+    \only<2>{
+    \item {\textbf{Performance}}
+    }
   \end{itemize}
 
 \end{frame}
@@ -206,7 +211,7 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Warning}
+\subsection*{Warning}
 \begin{frame}
   \frametitle{Warning}
 
@@ -222,9 +227,10 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section[Simple Wins]{Simple Performance Wins}
+\section[Simple Wins]{Simple performance wins}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\subsection[Slow Constructs]{Avoiding slow constructs}
 \begin{frame}[fragile]
   \frametitle{Avoiding well-known slow constructs}
 
@@ -279,55 +285,54 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\subsection[Unnecessary work]{Avoiding unnecessary work}
 \begin{frame}[fragile]
   \frametitle{Avoiding unnecessary work}
 
+  \begin{center}
+  \begin{minipage}{0.83\textwidth}
   \begin{block}{How merge-recursive got its name}
     {\scriptsize
     \begin{semiverbatim}
-      static struct commit* merge_recursive_internal(...)
-      \{
-          ...
-          \uncover<2>{
-          /* If we have multiple merge bases, merge them together first. */
-          \only<1-2>{combined_mb = bases[0];}
-          \only<3->{\color{red}combined_mb = bases[0];}
-          for (base in bases[1:]) \{
-              call_depth++;
-              discard_index(repo->index);
-              combined_mb = merge_recursive_internal(combined_mb, base);
-              call_depth--;
-          \}
-          \only<1-2>{
-          discard_index(repo->index);
-          if (!call_depth)
-              repo_read_index(opt->repo);
-          }
-          \only<3->{\color{red}
-          discard_index(repo->index);
-          if (!call_depth)
-              repo_read_index(opt->repo);
-          }
-          }
-          result = merge_trees_internal(combined_mb, side1, side2);
-          ...
-      \}
+static struct commit* merge_recursive_internal(...)
+\{
+    ...
+    \uncover<2->{
+    /* multiple merge bases? merge them together first. */\only<1-2>{
+    combined = bases[0];    }\only<3->{
+    {\color{red}combined = bases[0];}   }
+    for (base in bases[1:])
+        combined = merge_recursive_internal(combined, base);  \only<1-2>{
+    discard_index();
+    if (!inner_merge)
+        repo_read_index();  }\only<3->{{\color{red}
+    discard_index();
+    if (!inner_merge)
+        repo_read_index();}   }
+    }
+    result = merge_trees_internal(\only<1>{base}\only<2->{combined}, side1, side2);
+    ...
+\}
     \end{semiverbatim}
     }
   \end{block}
+  \end{minipage}
+  \end{center}
 
-  \only<3>{What if there is only one merge base to start? }\only<4>{Oops.}
+  %\vspace*{\baselineskip}
+  \only<3->{What if there is only one merge base to start? }\only<4>{Oops.}
 
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\subsection[Redoing work]{Avoiding redoing work}
 \begin{frame}
   \frametitle{Avoiding redoing work}
 
   Tree walking from merge-recursive.c:
+  \only<2->{
   \begin{itemize}
-    \only<2->{
     \item unpack\_trees()
     \only<3->{
     \item diff to find renames from base->side1
@@ -338,31 +343,37 @@
     \only<6->{
     \item get all file and directory names on side2
     \only<7->{
-    \item 6x get stage data \only<8->{for EACH rename\only<9->{on EACH side}}
-    }}}}}}
+    \item 6x get stage data \only<8->{for EACH rename \only<9->{on EACH side}}
+    }}}}}
   \end{itemize}
-  \only<10->{Total: $5+6*#renames$}
+  }
+  \only<10->{Total: $5+6*number\_of\_renames$}
 
   \only<11->{
-  Tree traversals from rewritten :
+  \vspace*{1.5\baselineskip}
+  Tree walking from merge machinery rewrite:
+  \only<12->{
   \begin{itemize}
-    \only<12->{
     \item collect\_merge\_info()
     \only<13->{
     \item unpack\_trees()
-    }}
+    }
   \end{itemize}
+  }
   \only<14->{Total: $2$}
+  }
 
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\subsection*{But...}
 \begin{frame}
   \frametitle{The big kicker...}
 
+  \vfill
   \begin{center}
-  \begin{minipage}{0.5\textwidth}
+  \begin{minipage}{0.55\textwidth}
     All of these optimizations combined are often a drop in a bucket
     compared to the cost of rename detection.
   \end{minipage}
@@ -371,7 +382,7 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section[Background]{Background}
+\section[Background]{Merging and renames background}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -479,7 +490,7 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Basic Merging}
+\subsection[Basic Merging]{Combining content merges}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -664,21 +675,21 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Renames}
+\subsection[Renames]{Why renames are important}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
-  \frametitle{Renames}
+  \frametitle{Why renames are important}
 
-  If a rename is not detected:\\
-    {\footnotesize
+  If a rename is not detected:\\[0.25em]
+    {\footnotesize\texttt{%
     \begin{tabular}{lll}
              & buccaneer.c  & viking.c  \\
       Base:  & ba771e5      & 0000000 \\
       Side1: & e5ca185      & 0000000 \\
       Side2: & 0000000      & defea75 \\
     \end{tabular}
-    }
+    }}
 
   \only<2->{
     \vspace*{1em}
@@ -706,28 +717,28 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
-  \frametitle{Renames}
+  \frametitle{Why renames are important}
 
   \only<1->{
     \vspace*{0.6em}
     If we detect renames...\\
     {\footnotesize
-    \qquad renames on side A: <omitted> \\
-    \qquad renames on side B: buccaneer.c $\Rightarrow$ viking.c, <others ommitted>\\
+    \qquad renames from Base$\to$Side1: <omitted> \\
+    \qquad renames from Base$\to$Side2: buccaneer.c $\Rightarrow$ viking.c, <others ommitted>\\
   }}
 
   \only<2->{
     \vspace*{0.6em}
     ...we can treat the two files as different versions of one file...\\
-    {\footnotesize
+    {\footnotesize\texttt{%
     \begin{tabular}{ll}
              & buccaneer.c $\Rightarrow$ viking.c   \\
       Base:  & ba771e5 \\
       Side1: & e5ca185 \\
       Side2: & defea75 \\
     \end{tabular}
-    }
-   }
+    }}
+  }
 
   \only<3->{
     \vspace*{0.6em}
@@ -748,11 +759,11 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Detection}
+\subsection[Detection]{How rename detection works}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
-  \frametitle{Detection}
+  \frametitle{How rename detection works}
 
   How does git detect renames?  For each side...\\[0.25em]
   \pause
