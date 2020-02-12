@@ -521,48 +521,48 @@ static struct commit* merge_recursive_internal(...)
     \begin{block}{Merge}
       \begin{tikzpicture}[node distance=10mm]
         \only<2->{
-          \node[commit] (Z) {Z};
+          \node[commit] (A) {A};
         }
         \only<2,6>{
-          \node[commit] (Y)  [right of=Z] {Y};
-          \node[commit] (W)  [right of=Y] {W};
-          \node[commit] (X)  [below right of=Z,yshift=-1em] {X};
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (C)  [below right of=A,yshift=-1em] {C};
         }
         \only<3-5>{
-          \node[orphanCommit] (Y)  [right of=Z] {Y};
-          \node[orphanCommit] (W)  [right of=Y] {W};
-          \node[orphanCommit] (X)  [below right of=Z,yshift=-1em] {X};
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (C)  [below right of=A,yshift=-1em] {C};
         }
         \only<2->{
-          \node[commit] (V)  [right of=W] {V};
-          \path[prnt] (V) edge (W);
-          \path[prnt] (W) edge (Y);
-          \path[prnt] (Y) edge (Z);
+          \node[commit] (E)  [right of=D] {E};
+          \path[prnt] (E) edge (D);
+          \path[prnt] (D) edge (B);
+          \path[prnt] (B) edge (A);
 
-          \node[commit] (U)  [right of=X] {U};
-          \path[prnt] (U) edge (X);
-          \path[prnt] (X) edge (Z);
+          \node[commit] (F)  [right of=C] {F};
+          \path[prnt] (F) edge (C);
+          \path[prnt] (C) edge (A);
 
-          \node[ref]    (f) [below of=U] {feature};
-          \path[bptr] (f) edge (U);
-          \node[ref]    (m)  [above of=V] {master};
+          \node[ref]    (f) [below of=F] {feature};
+          \path[bptr] (f) edge (F);
+          \node[ref]    (m)  [above of=E] {master};
         }
 
         \only<2-5| handout:1>{
-          \path[bptr] (m) edge (V);
+          \path[bptr] (m) edge (E);
         }
         \only<5>{
-          \node[redCommit] (T)  [right of=V] {T};
+          \node[redCommit] (G)  [right of=E] {G};
         }
         \only<6>{
-          \node[commit] (T)  [right of=V] {T};
+          \node[commit] (G)  [right of=E] {G};
         }
         \only<5-| handout:2-3>{
-          \path[prnt] (T) edge (V);
-          \path[prnt] (T) edge[bend left] (U);
+          \path[prnt] (G) edge (E);
+          \path[prnt] (G) edge[bend left] (F);
         }
         \only<6>{
-          \path[bptr] (m) edge (T);
+          \path[bptr] (m) edge (G);
         }
       \end{tikzpicture}
     \end{block}
@@ -577,89 +577,89 @@ static struct commit* merge_recursive_internal(...)
   \frametitle{Three-way Merging}
 
   \cl{git checkout master}\\
-  \cl{git cherry-pick X..feature}\\[0.5em]
+  \cl{git cherry-pick C..feature}\\[0.5em]
 
   \vspace*{-1.5em}
   \begin{center}
     \begin{minipage}{0.5\textwidth}
     \begin{block}{
         \only<1>{Starting state}
-        \only<2-4>{Picking U}
-        \only<5>{Picked U}
-        \only<6-8>{Picking T}
-        \only<9>{Picked T}
+        \only<2-4>{Picking F}
+        \only<5>{Picked F}
+        \only<6-8>{Picking G}
+        \only<9>{Picked G}
         \only<10->{Cherry picking complete}
         \phantom{Cg}% To make sure all titles have the same height
         }
       \begin{tikzpicture}[node distance=10mm]
         \only<1->{
-          \node[commit] (Z) {Z};
-          \node[commit] (Y)  [right of=Z] {Y};
-          \node[commit] (W)  [right of=Y] {W};
-          \node[commit] (V)  [right of=W] {V};
-          \node[commit] (X)  [below right of=Z,yshift=-1em] {X};
-          \node[commit] (U)  [right of=X] {U};
-          \node[commit] (T)  [right of=U] {T};
+          \node[commit] (A) {A};
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (E)  [right of=D] {E};
+          \node[commit] (C)  [below right of=A,yshift=-1em] {C};
+          \node[commit] (F)  [right of=C] {F};
+          \node[commit] (G)  [right of=F] {G};
         }
         \only<3-7>{
-          \node[orphanCommit] (Z)  {Z};
-          \node[orphanCommit] (Y)  [right of=Z] {Y};
-          \node[orphanCommit] (W)  [right of=Y] {W};
-          \node[orphanCommit] (T)  [right of=U] {T};
+          \node[orphanCommit] (A)  {A};
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (G)  [right of=F] {G};
         }
         \only<1->{
-          \path[prnt] (V) edge (W);
-          \path[prnt] (W) edge (Y);
-          \path[prnt] (Y) edge (Z);
+          \path[prnt] (E) edge (D);
+          \path[prnt] (D) edge (B);
+          \path[prnt] (B) edge (A);
 
-          \path[prnt] (T) edge (U);
-          \path[prnt] (U) edge (X);
-          \path[prnt] (X) edge (Z);
+          \path[prnt] (G) edge (F);
+          \path[prnt] (F) edge (C);
+          \path[prnt] (C) edge (A);
 
-          \node[ref]  (f) [below of=T] {feature};
-          \path[bptr] (f) edge (T);
-          \node[ref]  (m) [above of=V] {master};
+          \node[ref]  (f) [below of=G] {feature};
+          \path[bptr] (f) edge (G);
+          \node[ref]  (m) [above of=E] {master};
         }
 
         \only<1-9| handout:1>{
-          \path[bptr] (m) edge (V);
+          \path[bptr] (m) edge (E);
           %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
           %\path[bptr] (h) edge (m);
         }
         \only<4>{
-          \node[redCommit] (US) [right of=V, xshift=0.1em] {U$^*$};
-          \path[oprnt] (US) edge[bend left] (U);
+          \node[redCommit] (FS) [right of=E, xshift=0.1em] {F$^*$};
+          \path[oprnt] (FS) edge[bend left] (F);
         }
         \only<4-| handout:2-3>{
-          \path[prnt] (US) edge (V);
+          \path[prnt] (FS) edge (E);
         }
         \only<5->{
-          \node[commit] (Z) {Z};
-          \node[commit] (Y)  [right of=Z] {Y};
-          \node[commit] (W)  [right of=Y] {W};
-          \node[commit] (US) [right of=V, xshift=0.1em] {U$^*$};
-          \node[commit] (U)  [right of=X] {U};
-          \node[commit] (T)  [right of=U] {T};
+          \node[commit] (A) {A};
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (FS) [right of=E, xshift=0.1em] {F$^*$};
+          \node[commit] (F)  [right of=C] {F};
+          \node[commit] (G)  [right of=F] {G};
         }
         \only<7-8>{
-          \node[orphanCommit] (Z) {Z};
-          \node[orphanCommit] (Y)  [right of=Z] {Y};
-          \node[orphanCommit] (W)  [right of=Y] {W};
-          \node[orphanCommit] (V)  [right of=W] {V};
-          \node[orphanCommit] (X)  [below right of=Z,yshift=-1em] {X};
+          \node[orphanCommit] (A) {A};
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (E)  [right of=D] {E};
+          \node[orphanCommit] (C)  [below right of=A,yshift=-1em] {C};
         }
         \only<8>{
-          \node[redCommit] (TS) [right of=US, xshift=0.3em] {T$^*$};
-          \path[oprnt] (TS) edge[bend left] (T);
+          \node[redCommit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
+          \path[oprnt] (GS) edge[bend left] (G);
         }
         \only<9->{
-          \node[commit] (TS) [right of=US, xshift=0.3em] {T$^*$};
+          \node[commit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
         }
         \only<8-| handout:2-3>{
-          \path[prnt] (TS) edge (US);
+          \path[prnt] (GS) edge (FS);
         }
         \only<10-| handout:1>{
-          \path[bptr] (m) edge[bend left] (TS);
+          \path[bptr] (m) edge[bend left] (GS);
           %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
           %\path[bptr] (h) edge (m);
         }
