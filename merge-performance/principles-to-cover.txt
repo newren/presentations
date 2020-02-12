@@ -1,44 +1,21 @@
-* See also
-  * presentations/rename-cherry-pick-demo/lots-o-renames.pdf
-  * presentations/how-merge-works/how-merge-works.pdf
-    (latter has improved early slides over the former)
+Next pieces
+  * Cover simple performance improvements quickly before background
+  * More involved cases
+  * Comparison before and after
+
+Cleanups:
+  * Use tikz to get cross-out on "This is not one of those talks"
+  *
 
 * Early explanations
   * (Work from years ago and Peff and I's standoff over who would rewrite?)
   * Original problem at Palantir that motivated my return
-  * Peff's & Junio's opinions of merge-recursive.c
-  * Purposes of my rewrite
-    * Maintainability/understandability
-    * Correctness
-    * Performance
-    * Improved API & New Features
-  * Division of work
-    * builtin/merge.c (which strategy -- ff, octopus, normal; commit, diffstat)
-    * merge-recursive.c (default strategy and main engine; plumbs
-      stuff together, finding merge base(s), path-based conflicts
-      (e.g. directory/file, modify/delete), and mode-based conflicts
-      (symlink vs submodule), and renames.
-    * ll-merge.c (thin xdl_merge wrapper; heeds path-specific .gitattributes
-      such as special drivers or normalization)
-    * xdiff/xmerge.c (actual content merging)
 
 * Amusing
 
-  * Title: Git Merge -> (git merge)^2   [Talking about git merge at Git Merge]
-
   * "This work represents my attempt to continue to not believe them."
 
-  * "This is not one of those talks"
-    * Ideal performance talk
-      * Maximizing the machine performance
-      * Applying ideas from other fields to new areas
-      * Algorithmic research
-    * This performance talk
-      * Don't do unnecessary work
-      * Don't redo work
-      * Don't redo unnecessary work
-      * Fudge "unnecessary"
-      * Avoid unnecessary O(N^2) algorithms
+  * Ideal performance talk vs. this talk
 
 Savings:
   * Avoiding rework based on understanding the algorithm:
