@@ -205,6 +205,96 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Simple Wins]{Simple Performance Wins}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Avoiding well-known slow constructs}
+
+  From string-list.h:
+  {\scriptsize
+  \vspace*{-0.5\baselineskip}
+  \begin{verbatim}
+ * NOTE: It is more efficient to build an unsorted list and sort it
+ * afterwards, instead of building a sorted list (`O(n log n)` instead of
+ * `O(n^2)`).
+  \end{verbatim}
+  \vspace*{-\baselineskip}
+  }
+
+  \only<2>{
+  Oops.
+  }
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Avoiding well-known slow constructs}
+
+  Comment above \texttt{remove\_marked\_cache\_entries()}:
+  {\scriptsize
+  \vspace*{-0.5\baselineskip}
+  \begin{verbatim}
+/*
+ * Remove all cache entries marked for removal...this is much more
+ * effective than calling remove_index_entry_at() for each entry to be
+ * removed.
+ */
+  \end{verbatim}
+  }
+
+  \only<2->{
+  \vspace*{-1.25\baselineskip}
+  \begin{itemize}
+    \item merge-recursive's design incompatible with this, instead:
+    \item O($tracked\_files$) work required for each deletion/insertion
+    \item O($2*files\_changed$) deletions/insertions
+  \end{itemize}
+  }
+
+  \only<3->{
+    Needed a significant restructure to avoid this quasi-quadratic
+    behavior.
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Avoiding unnecessary work}
+
+  Comment above \texttt{remove\_marked\_cache\_entries()}:
+  {\scriptsize
+  \vspace*{-0.5\baselineskip}
+  \begin{semiverbatim}
+    static struct commit* merge_recursive_internal(...)
+    \{
+        ...
+        \uncover<2>{
+        /* If we have multiple merge bases, merge them together first. */
+        combined_mb = bases[0];
+        for (base in bases[1:]) \{
+            call_depth++;
+            discard_index(repo->index);
+            combined_mb = merge_recursive_internal(combined_mb, base);
+            call_depth--;
+        \}
+        discard_index(repo->index);
+        if (!call_depth)
+            repo_read_index(opt->repo);
+        }
+        result = merge_trees_internal(combined_mb, side1, side2);
+        ...
+    \}
+  \end{semiverbatim}
+  }
+
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section[Background]{Background}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
