@@ -265,32 +265,77 @@
 \begin{frame}[fragile]
   \frametitle{Avoiding unnecessary work}
 
-  Comment above \texttt{remove\_marked\_cache\_entries()}:
-  {\scriptsize
-  \vspace*{-0.5\baselineskip}
-  \begin{semiverbatim}
-    static struct commit* merge_recursive_internal(...)
-    \{
-        ...
-        \uncover<2>{
-        /* If we have multiple merge bases, merge them together first. */
-        combined_mb = bases[0];
-        for (base in bases[1:]) \{
-            call_depth++;
-            discard_index(repo->index);
-            combined_mb = merge_recursive_internal(combined_mb, base);
-            call_depth--;
-        \}
-        discard_index(repo->index);
-        if (!call_depth)
-            repo_read_index(opt->repo);
-        }
-        result = merge_trees_internal(combined_mb, side1, side2);
-        ...
-    \}
-  \end{semiverbatim}
-  }
+  \begin{block}{How merge-recursive got its name}
+    {\scriptsize
+    \begin{semiverbatim}
+      static struct commit* merge_recursive_internal(...)
+      \{
+          ...
+          \uncover<2>{
+          /* If we have multiple merge bases, merge them together first. */
+          \only<1-2>{combined_mb = bases[0];}
+          \only<3->{\color{red}combined_mb = bases[0];}
+          for (base in bases[1:]) \{
+              call_depth++;
+              discard_index(repo->index);
+              combined_mb = merge_recursive_internal(combined_mb, base);
+              call_depth--;
+          \}
+          \only<1-2>{
+          discard_index(repo->index);
+          if (!call_depth)
+              repo_read_index(opt->repo);
+          }
+          \only<3->{\color{red}
+          discard_index(repo->index);
+          if (!call_depth)
+              repo_read_index(opt->repo);
+          }
+          }
+          result = merge_trees_internal(combined_mb, side1, side2);
+          ...
+      \}
+    \end{semiverbatim}
+    }
+  \end{block}
 
+  \only<3>{What if there is only one merge base to start? }\only<4>{Oops.}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Avoiding redoing work}
+
+  Tree walking from merge-recursive.c:
+  \begin{itemize}
+    \only<2->{
+    \item unpack\_trees()
+    \only<3->{
+    \item diff to find renames from base->side1
+    \only<4->{
+    \item diff to find renames from base->side2
+    \only<5->{
+    \item get all file and directory names on side1
+    \only<6->{
+    \item get all file and directory names on side2
+    \only<7->{
+    \item 6x get stage data \only<8->{for EACH rename\only<9->{on EACH side}}
+    }}}}}}
+  \end{itemize}
+  \only<10->{Total: $5+6*#renames$}
+
+  \only<11->{
+  Tree traversals from rewritten :
+  \begin{itemize}
+    \only<12->{
+    \item collect\_merge\_info()
+    \only<13->{
+    \item unpack\_trees()
+    }}
+  \end{itemize}
+  \only<14->{Total: $2$}
 
 \end{frame}
 
