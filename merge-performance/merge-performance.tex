@@ -6,6 +6,7 @@
 
 \input{preamble}
 \usepackage{multicol}
+\usepackage{ulem} % used in definition of \redout
 
 \usepackage{tikz}
 \usetikzlibrary{arrows,snakes,backgrounds,shapes}
@@ -25,6 +26,9 @@
 \colorlet{myred}{red!90!black} % slightly darker than normal red
 \colorlet{myblue}{cyan}        % plain cyan works; might consdier darkening
 \colorlet{mygreen}{green!70!black} % slightly darker than normal green
+\newcommand\redout{\bgroup\markoverwith
+    {\textcolor{red}{\rule[.5ex]{2pt}{0.8pt}}}\ULon
+}
 
 \title{Scaling the Merge Machinery}
 
@@ -851,6 +855,195 @@ void detect_renames_and_copies(...)
   \only<6>{
     \vspace*{-0.5\baselineskip}
     Speed-up: varies; my first testcase saw a factor of 2.
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Skip]{Partial Capitulation}
+\begin{frame}[fragile]
+  \frametitle{Partial Capitulation}
+
+  \vspace*{-0.25\baselineskip}
+  \only<2->{
+    If a rename is not detected:\\[0.25em]
+      {\footnotesize\texttt{%
+      \begin{tabular}{lll}
+               & buccaneer.c  & viking.c \\
+        Base:
+          &
+          \only<2-3>{5eac0a57}%
+          \only<4->{{\color{red}5eac0a57}}%
+          &
+          0000000  \\
+        Side1:
+          &
+          \only<2-3>{5caff01d}%
+          \only<4>{{\color{red}5caff01d}}%
+          \only<5->{{\color{green}5eac0a57}}
+          &
+          0000000  \\
+        Side2: & 0000000      &  0b57ac1e \\
+      \end{tabular}
+      }}
+
+    \vspace*{0.5\baselineskip}
+    Then:
+      \begin{itemize}
+        \item buccaneer.c:
+              \only<2>{modify/delete conflict}%
+              \only<3-5>{{\color{red}modify/delete conflict}}%
+              \only<6->{{\color{green}deleted as expected}}
+        \item viking.c: totally new file
+        \item
+              \only<2>{no textual merging}%
+              \only<3-6>{\color{red}no textual merging}%
+              \only<7->{no textual merging \color{green}needed}
+      \end{itemize}
+
+    \vspace*{0.5\baselineskip}
+    As reported by git:\\[0.5em]
+      {\footnotesize\texttt{%
+        \quad{}\$ git status\\
+        \quad{}...\\
+        \only<2>{
+          \quad{}Unmerged paths:\\
+          \qquad{}	deleted by us:   buccaneer.c\\
+        }
+        \only<3-5>{{\color{red}
+          \quad{}Unmerged paths:\\
+          \qquad{}	deleted by us:   buccaneer.c\\
+        }}
+        \only<6->{{\color{green}
+          \qquad\textit{(Clean)}\phantom{g}
+          \vspace*{0.75\baselineskip}
+        }}
+      }}
+  }
+
+  \only<3-7>{
+    \vspace*{0.5\baselineskip}
+    {\color{red}When can we get away with this?}
+  }
+
+  \only<8>{
+    \vspace*{0.5\baselineskip}
+    {\color{green}
+      Skip rename detection \textbf{if} source unmodified
+      on \textit{other} side of history.
+    }
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Partial Capitulation -- Caveats?}
+
+  \vspace*{-1.5\baselineskip}
+  \begin{center}
+  \begin{minipage}{0.8\textwidth}
+  \begin{block}{New Strategy}
+    Skip rename detection \textbf{if} source unmodified on \textit{other}
+    side of history\only<1-3>{.
+      \vspace*{\baselineskip}
+    }%
+    \only<4->{
+      {\color{green}
+      and parent directory of source file exists on \textit{same} side of
+      history}.
+    }
+
+  \end{block}
+  \end{minipage}
+  \end{center}
+
+  \only<2->{
+  \vspace*{-0.5\baselineskip}
+  Possible problems:
+  \only<3->{
+  \begin{itemize}
+    \item
+          \only<3-4>{causes issues for directory rename detection}
+          \only<5->{\redout{causes issues for directory rename detection}}
+    \only<6->{
+    \item rename/add conflict looks like add/add
+    \only<7->{
+    \item rename/rename(2to1) conflict looks like rename/add or add/add
+    }}
+  \end{itemize}
+  }}
+
+  \only<8->{
+  ``Mis-detected'' conflict types:
+  \only<9->{
+  \begin{itemize}
+    \item
+      \only<9-12>{Different conflict-related files in the working copy}
+      \only<13->{\redout{Different conflict-related files in the working copy}}
+    \only<10->{
+    \item
+      \only<10-12>{Different conflict-related entries in the index}
+      \only<13->{\redout{Different conflict-related entries in the index}}
+    \only<11->{
+    \item Different stdout; reports e.g. \texttt{CONFLICT(add/add)} instead
+          of \texttt{CONFLICT(rename/add)}
+    }}
+  \end{itemize}
+  }}
+
+  \only<12->{
+  After unifying file collision conflict handling...%
+  \only<14>{{\color{green}stdout is only difference.}}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Partial Capitulation -- Micro or Mega Optimization?}
+
+  \vspace*{-1.5\baselineskip}
+  \begin{center}
+  \begin{minipage}{0.8\textwidth}
+  \begin{block}{New Strategy}
+    Skip rename detection \textbf{if} source unmodified on \textit{other}
+    side of history and parent directory of source file exists
+    on \textit{same} side of history.
+  \end{block}
+  \end{minipage}
+  \end{center}
+
+  \only<2->{
+    Rename detection is fundamentally O($N*M$), where $N$ and $M$
+    are \textbf{huge}.
+    \vspace*{-0.75\baselineskip}
+    \begin{center}
+      {\scriptsize
+        ($N$,$M$ \textasciitilde{} O(combined line count of potential rename
+         sources/targets))
+      }
+    \end{center}
+    \vspace*{-0.5\baselineskip}
+  }
+  \only<3->{
+    How much does this new strategy help?
+  }
+  \only<4->{
+    %\vspace*{-1.0\baselineskip}
+    \vfill
+    \begin{center}
+    \begin{minipage}{0.4\textwidth}
+    \begin{block}{\begin{center}A Common Case\end{center}}
+      \qquad
+      O($N*M$) $\to$ \only<5>{O($\emptyset*M$)}\phantom{$\emptyset$}
+    \end{block}
+    \end{minipage}
+    \end{center}
+    \vfill
   }
 
 \end{frame}
