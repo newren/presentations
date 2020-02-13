@@ -1214,6 +1214,196 @@ void detect_renames_and_copies(...)
 
 \end{frame}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Remembering]{Remembering previous work}
+\begin{frame}
+  \frametitle{Remembering previous work}
+
+  \qquad
+  \begin{minipage}{0.5\textwidth}
+    \begin{block}{
+        \only<1>{Cherry-picking C..feature}
+        \only<2-6>{Picking F}
+        \only<7>{Picked F}
+        \only<8-14>{Picking G}
+        \only<15>{Picked G}
+        \only<16->{Cherry picking complete}
+        \phantom{Cg}% To make sure all titles have the same height
+        }
+      \begin{tikzpicture}[node distance=10mm]
+        \only<1->{
+          \node[commit] (A) {A};
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (E)  [right of=D] {E};
+          \node[commit] (C)  [below right of=A,yshift=-1em] {C};
+          \node[commit] (F)  [right of=C] {F};
+          \node[commit] (G)  [right of=F] {G};
+        }
+        \only<3-9>{
+          \node[orphanCommit] (A)  {A};
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (G)  [right of=F] {G};
+        }
+        \only<1->{
+          \path[prnt] (E) edge (D);
+          \path[prnt] (D) edge (B);
+          \path[prnt] (B) edge (A);
+
+          \path[prnt] (G) edge (F);
+          \path[prnt] (F) edge (C);
+          \path[prnt] (C) edge (A);
+
+          \node[ref]  (f) [below of=G] {feature};
+          \path[bptr] (f) edge (G);
+          \node[ref]  (m) [above of=E] {master};
+        }
+
+        \only<1-15| handout:1>{
+          \path[bptr] (m) edge (E);
+          %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
+          %\path[bptr] (h) edge (m);
+        }
+        \only<6>{
+          \node[redCommit] (FS) [right of=E, xshift=0.1em] {F$^*$};
+          \path[oprnt] (FS) edge[bend left] (F);
+        }
+        \only<6-| handout:2-3>{
+          \path[prnt] (FS) edge (E);
+        }
+        \only<7->{
+          \node[commit] (A) {A};
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (FS) [right of=E, xshift=0.1em] {F$^*$};
+          \node[commit] (F)  [right of=C] {F};
+          \node[commit] (G)  [right of=F] {G};
+        }
+        \only<9-14>{
+          \node[orphanCommit] (A) {A};
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (E)  [right of=D] {E};
+          \node[orphanCommit] (C)  [below right of=A,yshift=-1em] {C};
+        }
+        \only<14>{
+          \node[redCommit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
+          \path[oprnt] (GS) edge[bend left] (G);
+        }
+        \only<15->{
+          \node[commit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
+        }
+        \only<14-| handout:2-3>{
+          \path[prnt] (GS) edge (FS);
+        }
+        \only<16-| handout:1>{
+          \path[bptr] (m) edge[bend left] (GS);
+          %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
+          %\path[bptr] (h) edge (m);
+        }
+      \end{tikzpicture}
+    \end{block}
+  \end{minipage}%
+  \only<7->{%
+  \hfill
+  \begin{minipage}{0.32\textwidth}
+    \begin{block}{}
+      $
+      \begin{array}{ll}
+        \multicolumn{2}{c}{\textrm{buccaneer.c}\Rightarrow\textrm{viking.c}} \\
+        C: & \texttt{c0a575} \\
+        E: & \texttt{b1ade5} \\
+        F: & \texttt{befa11} \\
+        \hline
+        F^*\!\!: & \texttt{1007ed}
+      \end{array}
+      $
+    \end{block}
+  \end{minipage}
+  \hfill
+  }
+
+  \vspace*{-\baselineskip}
+  \only<4-7>{
+    \vfill
+    \begin{center}
+    \begin{minipage}{0.88\textwidth}
+    \begin{block}{}
+      $
+      \left\lbrace
+      \begin{array}{lll}
+           & \textrm{buccaneer.c} & \textrm{viking.c} \\
+        C: & \texttt{c0a575}      & \texttt{000000}   \\
+        E: & \texttt{000000}      & \texttt{b1ade5}   \\
+        F: & \texttt{befa11}      & \texttt{000000}
+      \end{array}
+      \right\rbrace \only<5->{\to \left\lbrace
+      \begin{array}{ll}
+        \multicolumn{2}{c}{\textrm{buccaneer.c}\Rightarrow\textrm{viking.c}} \\
+        C: & \texttt{c0a575} \\
+        E: & \texttt{b1ade5} \\
+        F: & \texttt{befa11}
+      \end{array}\right\rbrace
+      }
+      $
+
+      \only<4-5>{
+        \phantom{$F^*$}
+      }
+      \only<6-7>{
+        \hspace*{16.4em} $F^*:$ \;\;\,\texttt{1007ed}
+      }
+    \end{block}
+    \end{minipage}
+    \end{center}
+    \vfill
+  }
+  \only<10->{
+    \vfill
+    \begin{center}
+    \begin{minipage}{0.88\textwidth}
+    \begin{block}{}
+      $
+      \left\lbrace
+      \begin{array}{lll}
+             & \textrm{buccaneer.c} & \textrm{viking.c} \\
+        F:   & \texttt{befa11}      & \texttt{000000}   \\
+        F^*: & \texttt{000000}      & \texttt{1007ed}   \\
+        G:   & \texttt{a70115}      & \texttt{000000}
+      \end{array}
+      \right\rbrace \only<12->{\to \left\lbrace
+      \begin{array}{ll}
+        \multicolumn{2}{c}{\textrm{buccaneer.c}\Rightarrow\textrm{viking.c}} \\
+        F:   & \texttt{befa11}  \\
+        F^*: & \texttt{1007ed}  \\
+        G:   & \texttt{a70115}
+      \end{array}\right\rbrace
+      }$
+
+      \only<10-12>{
+        \phantom{$G^*$}
+      }
+      \only<13->{
+      \hspace*{17.0em} $G^*:$ \;\;\,\texttt{fab1ed}
+      }
+    \end{block}
+    \end{minipage}
+    \end{center}
+    \vfill
+  }
+  \only<11-12>{
+    \begin{tikzpicture}[remember picture,overlay]
+       \draw[mygreen,line width=1pt] (2.93, 2.13) ellipse (2.5em and 0.5em);
+       \draw[orange, line width=1pt] (5.06, 1.65) ellipse (2.5em and 0.5em);
+       \draw[mygreen,line width=1pt] (9.39, 5.02) ellipse (2.5em and 0.5em);
+       \draw[orange, line width=1pt] (9.39, 4.52) ellipse (2.5em and 0.5em);
+    \end{tikzpicture}
+  }
+
+\end{frame}
+
 \begin{comment}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
