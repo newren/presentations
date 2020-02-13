@@ -828,8 +828,9 @@ static struct commit* merge_recursive_internal(...)
         \vspace*{2\baselineskip}
 
         {\scriptsize
-          $M$,$N$ \textasciitilde{} O(combined line count of potential rename
-          sources or targets)
+          \{{\color{mygreen}$M$}, {\color{orange}$N$}\}
+          \textasciitilde{} O(combined line count of potential rename
+          \{{\color{mygreen}sources}, {\color{orange}targets}\})
         }
       \end{center}
     \end{block}
