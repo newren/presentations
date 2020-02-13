@@ -1404,6 +1404,56 @@ void detect_renames_and_copies(...)
 
 \end{frame}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Honing]{But wait, there's more!}
+\begin{frame}
+  \frametitle{But wait, there's more!}
+
+  \begin{itemize}[<+(1)->]
+
+    \item Extend ``partial capitulation'' ideas from \textit{file}
+          renames to \textit{directory} renames
+
+      \begin{itemize}
+        \item More caveats involved, but...
+        \item Also enables partial tree traversal elimination
+      \end{itemize}
+
+    \item Avoid updating the index or working tree if not needed
+
+      \begin{itemize}
+        \item Helps with new sparse-checkout command
+        \item Accelerates rebases and cherry-picks
+        \item Avoids unnecessary recompilation after a rebase
+      \end{itemize}
+
+    \item ...and a few other minor improvements
+      % * avoid re-comparing hashes (unpack_trees did it once, then we repeated)
+      % * memoize not-found results from previous runs of check_dir_renamed()
+      %   (store dir_renames + non-renames in a strmap)
+
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Results]{Results}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Results}
+
+  \vfill
+  \begin{center}
+    In Progress\\[2em]
+
+    https://github.com/newren/git/tree/ort
+  \end{center}
+  \vfill
+
+\end{frame}
+
 \begin{comment}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
