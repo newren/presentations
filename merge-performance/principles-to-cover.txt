@@ -19,22 +19,22 @@ Cleanups:
 
 Savings:
   * Avoiding rework based on understanding the algorithm:
-    * hash comparison for exact renames (and not throwing away that work)
-    * remove source file from comparisons if other side didn't modify
-    * use file basename to avoid exhaustive O(N^2) comparison
+    X hash comparison for exact renames (and not throwing away that work)
+    X remove source file from comparisons if other side didn't modify
+    X use file basename to avoid exhaustive O(N^2) comparison
     * re-use rename information while rebasing or cherry-picking
     * trivial tree merges (all match) and partial merges (side match)
     * avoid (dir) rename detection when traversal paths shows it's unnecessary
       (no directory removed, or none added: no dir rename)
     * avoid updating the index or working tree if not needed (esp. in rebase)
   * Brute force avoid unnecessary work or rework:
-    * tree traversals (old: {unpack:1(3), unique:2, diff:2(4),
+    X tree traversals (old: {unpack:1(3), unique:2, diff:2(4),
                              get_tree_entry:3*2*#renames},
                        new: {basic:1(3-partial), unpack:1(2)})
-    * repeatedly drop & reload cache (sometimes not necessary at all)
+    X repeatedly drop & reload cache (sometimes not necessary at all)
     * avoid re-comparing hashes (unpack_trees did it once, then we repeated)
     * memoize not-found results from previous runs of check_dir_renamed()
       (store dir_renames + non-renames in a strmap)
   * Avoid O(N^2):
-    * The idea behind remove_marked_cache_entries(); not used by merge-recursive
-    * string_list_insert (see NOTE in string-list.h)
+    X The idea behind remove_marked_cache_entries(); not used by merge-recursive
+    X string_list_insert (see NOTE in string-list.h)
