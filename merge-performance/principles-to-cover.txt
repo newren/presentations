@@ -1,40 +1,10 @@
 Next pieces
-  * Cover simple performance improvements quickly before background
-  * More involved cases
-  * Comparison before and after
-
-Cleanups:
-  * Use tikz to get cross-out on "This is not one of those talks"
-  *
+  * Results: comparison before and after
 
 * Early explanations
   * (Work from years ago and Peff and I's standoff over who would rewrite?)
   * Original problem at Palantir that motivated my return
 
 * Amusing
-
-  * "This work represents my attempt to continue to not believe them."
-
   * Ideal performance talk vs. this talk
-
-Savings:
-  * Avoiding rework based on understanding the algorithm:
-    X hash comparison for exact renames (and not throwing away that work)
-    X remove source file from comparisons if other side didn't modify
-    X use file basename to avoid exhaustive O(N^2) comparison
-    * re-use rename information while rebasing or cherry-picking
-    * trivial tree merges (all match) and partial merges (side match)
-    * avoid (dir) rename detection when traversal paths shows it's unnecessary
-      (no directory removed, or none added: no dir rename)
-    * avoid updating the index or working tree if not needed (esp. in rebase)
-  * Brute force avoid unnecessary work or rework:
-    X tree traversals (old: {unpack:1(3), unique:2, diff:2(4),
-                             get_tree_entry:3*2*#renames},
-                       new: {basic:1(3-partial), unpack:1(2)})
-    X repeatedly drop & reload cache (sometimes not necessary at all)
-    * avoid re-comparing hashes (unpack_trees did it once, then we repeated)
-    * memoize not-found results from previous runs of check_dir_renamed()
-      (store dir_renames + non-renames in a strmap)
-  * Avoid O(N^2):
-    X The idea behind remove_marked_cache_entries(); not used by merge-recursive
-    X string_list_insert (see NOTE in string-list.h)
+  * "This work represents my attempt to continue to not believe them."
