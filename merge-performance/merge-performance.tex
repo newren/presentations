@@ -1019,12 +1019,12 @@ void detect_renames_and_copies(...)
   \end{center}
 
   \only<2->{
-    Rename detection is fundamentally O($N*M$), where $N$ and $M$
+    Rename detection is fundamentally O($M*N$), where $M$ and $N$
     are \textbf{huge}.
     \vspace*{-0.75\baselineskip}
     \begin{center}
       {\scriptsize
-        ($N$,$M$ \textasciitilde{} O(combined line count of potential rename
+        ($M$,$N$ \textasciitilde{} O(combined line count of potential rename
          sources/targets))
       }
     \end{center}
@@ -1040,7 +1040,7 @@ void detect_renames_and_copies(...)
     \begin{minipage}{0.4\textwidth}
     \begin{block}{\begin{center}A Common Case\end{center}}
       \qquad
-      O($N*M$) $\to$ \only<5>{O($\emptyset*M$)}\phantom{$\emptyset$}
+      O($M*N$) $\to$ \only<5>{O($\emptyset*N$)}\phantom{$\emptyset$}
     \end{block}
     \end{minipage}
     \end{center}
@@ -1204,7 +1204,7 @@ void detect_renames_and_copies(...)
     \begin{minipage}{0.4\textwidth}
     \begin{block}{\begin{center}Common Cases\end{center}}
       \begin{center}
-        O($N*M$) $\to$ O(min($N,M$))
+        O($M*N$) $\to$ O(min($M,N$))
       \end{center}
     \end{block}
     \end{minipage}
