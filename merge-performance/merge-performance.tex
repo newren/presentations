@@ -810,6 +810,37 @@ static struct commit* merge_recursive_internal(...)
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{How rename detection works}
+
+    \vfill
+
+    \begin{center}
+    \begin{minipage}{0.83\textwidth}
+    \begin{block}{\begin{center}Crux of the problem\end{center}}
+      \begin{center}
+        \vspace*{1\baselineskip}
+
+        Rename detection is O($M*N$), where $M$ and $N$
+        are \textbf{huge}.
+
+        \vspace*{2\baselineskip}
+
+        {\scriptsize
+          $M$,$N$ \textasciitilde{} O(combined line count of potential rename
+          sources or targets)
+        }
+      \end{center}
+    \end{block}
+    \end{minipage}
+    \end{center}
+
+    \vfill
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section[Renames]{Rename Performance}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -1016,32 +1047,20 @@ void detect_renames_and_copies(...)
   \end{center}
 
   \only<2->{
-    Rename detection is fundamentally O($M*N$), where $M$ and $N$
-    are \textbf{huge}.
-    \vspace*{-0.75\baselineskip}
     \begin{center}
-      {\scriptsize
-        ($M$,$N$ \textasciitilde{} O(combined line count of potential rename
-         sources/targets))
-      }
+    How much does this new strategy help?
     \end{center}
-    \vspace*{-0.5\baselineskip}
   }
   \only<3->{
-    How much does this new strategy help?
-  }
-  \only<4->{
-    %\vspace*{-1.0\baselineskip}
-    \vfill
+    \vspace*{-1.0\baselineskip}
     \begin{center}
     \begin{minipage}{0.4\textwidth}
     \begin{block}{\begin{center}A Common Case\end{center}}
       \qquad
-      O($M*N$) $\to$ \only<5>{O($\emptyset*N$)}\phantom{$\emptyset$}
+      O($M*N$) $\to$ \only<4>{O($\emptyset*N$)}\phantom{$\emptyset$}
     \end{block}
     \end{minipage}
     \end{center}
-    \vfill
   }
 
 \end{frame}
