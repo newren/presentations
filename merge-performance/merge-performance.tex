@@ -26,6 +26,7 @@
 \colorlet{myred}{red!90!black} % slightly darker than normal red
 \colorlet{myblue}{cyan}        % plain cyan works; might consdier darkening
 \colorlet{mygreen}{green!70!black} % slightly darker than normal green
+\colorlet{mypurple}{magenta!80!black}
 \newcommand\redout{\bgroup\markoverwith
     {\textcolor{red}{\rule[.5ex]{2pt}{0.8pt}}}\ULon
 }
@@ -815,7 +816,7 @@ static struct commit* merge_recursive_internal(...)
 \section[Renames]{Rename Performance}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection[Exact]{Exact renames}
+\subsection[Bypassing]{Exact renames}
 \begin{frame}[fragile]
   \frametitle{Exact renames}
 
@@ -861,9 +862,9 @@ void detect_renames_and_copies(...)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection[Skip]{Partial Capitulation}
+\subsection[Capitulating]{Partial capitulation}
 \begin{frame}[fragile]
-  \frametitle{Partial Capitulation}
+  \frametitle{Partial capitulation}
 
   \vspace*{-0.25\baselineskip}
   \only<2->{
@@ -940,7 +941,7 @@ void detect_renames_and_copies(...)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}[fragile]
-  \frametitle{Partial Capitulation -- Caveats?}
+  \frametitle{Partial capitulation -- Caveats?}
 
   \vspace*{-1.5\baselineskip}
   \begin{center}
@@ -1004,7 +1005,7 @@ void detect_renames_and_copies(...)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}[fragile]
-  \frametitle{Partial Capitulation -- Micro or Mega Optimization?}
+  \frametitle{Partial capitulation -- micro or mega optimization?}
 
   \vspace*{-1.5\baselineskip}
   \begin{center}
@@ -1040,6 +1041,171 @@ void detect_renames_and_copies(...)
     \begin{block}{\begin{center}A Common Case\end{center}}
       \qquad
       O($N*M$) $\to$ \only<5>{O($\emptyset*M$)}\phantom{$\emptyset$}
+    \end{block}
+    \end{minipage}
+    \end{center}
+    \vfill
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Linearizing]{Dimensionality Reduction}
+\begin{frame}
+  \frametitle{Dimensionality Reduction}
+
+  Basic rename detection rules:
+  \only<2->{
+  \begin{itemize}
+    \item If the same path exists in base and a side, those paths are
+          always assumed to be different versions of the same file.  (No
+          break detection is done.)
+    \only<3->{
+    \item If a path exists in base but not the side or vice versa, must
+          exhaustively look through all pairings for best match.
+    }
+  \end{itemize}
+  }
+
+  \only<4->{
+    %\vspace*{-1.0\baselineskip}
+    \vfill
+    \begin{center}
+    \begin{minipage}{0.65\textwidth}
+    \begin{block}{\begin{center}Fun fact\end{center}}
+        80\% of renames in the linux kernel repository do not change the
+        basename of the file, just the directory in which it is found.
+    \end{block}
+    \end{minipage}
+    \end{center}
+    \vfill
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Dimensionality Reduction}
+
+  \vspace*{-0.5\baselineskip}
+  Detecting renames...
+
+  \vspace*{-0.5\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l}
+      Files in Base  &  Files in given side \\
+      \hline
+        \only<1>{\phantom{document.html}}%
+        \only<2->{document.html}
+      &
+        \only<2->{build.log}
+      \\
+
+        \only<2->{src/{\color{blue}        blue.css}}
+      &
+        \only<2->{document.html}
+      \\
+
+        \only<2->{src/{\color{brown}       brown.css}}
+      &
+        \only<2->{source/{\color{blue}     blue.css}}
+      \\
+
+        \only<2->{src/{\color{green}       green.css}}
+      &
+        \only<2->{source/{\color{brown}    brown.css}}
+      \\
+
+        \only<2->{src/{\color{red}         red.css}}
+      &
+        \only<2->{source/{\color{green}    green.css}}
+      \\
+
+      &
+        \only<1>{\phantom{source/{\color{orange}   orange.css}}}%
+        \only<2->{source/{\color{orange}   orange.css}}
+      \\
+
+      &
+        \only<2->{source/{\color{mypurple} purple.css}}
+      \\
+
+      &
+        \only<2->{source/{\color{red}      red.css}}
+
+    \end{tabular}
+    }
+  \end{center}
+  \vspace*{-1.5\baselineskip}
+
+  \vspace*{\baselineskip}
+  For each pair of files, what percentage of lines are found in both?
+  \vspace*{-0.25\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l|l|l|l}
+          &
+            \only<1-2>{\phantom{src/blue.css}}
+            \only<3->{src/{\color{blue}     blue.css}}
+          &
+            \only<1-2>{\phantom{src/brown.css}}%
+            \only<3->{src/{\color{brown}    brown.css}}
+          &
+            \only<1-2>{\phantom{src/green.css}}%
+            \only<3->{src/{\color{green}    green.css}}
+          &
+            \only<1-2>{\phantom{src/red.css}}%
+            \only<3->{src/{\color{red}      red.css}}
+          \\
+
+      \hline
+
+      \only<3->{build.log}           &&&& \\
+      \only<3->{source/{\color{blue}     blue.css}}    &&&& \\
+      \only<3->{source/{\color{brown}    brown.css}}   &&&& \\
+      \only<3->{source/{\color{green}    green.css}}   &&&& \\
+      \only<1-2>{\phantom{source/orange.css}}%
+      \only<3->{source/{\color{orange}   orange.css}}  &&&& \\
+      \only<3->{source/{\color{mypurple} purple.css}}  &&&& \\
+      \only<3->{source/{\color{red}      red.css}}     &&&& \\
+
+
+    \end{tabular}
+    }
+  \end{center}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Dimensionality Reduction}
+
+  Basic rename detection rules:
+  \begin{itemize}
+    \item If the same path exists in base and a side, those paths are
+          always assumed to be different versions of the same file.  (No
+          break detection is done.)
+    \only<2->{{\color{green}
+    \item If unique basename matches are found, compare the contents.
+          if they meet the rename threshold treat them as a rename without
+          comparing these files to any others. Otherwise...
+    }}
+    \item If a path exists in base but not the side or vice versa, must
+          exhaustively look through all pairings for best match.
+  \end{itemize}
+
+  \only<3->{
+    \vfill
+    \begin{center}
+    \begin{minipage}{0.4\textwidth}
+    \begin{block}{\begin{center}Common Cases\end{center}}
+      \begin{center}
+        O($N*M$) $\to$ O(min($N,M$))
+      \end{center}
     \end{block}
     \end{minipage}
     \end{center}
