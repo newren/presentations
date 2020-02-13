@@ -1,5 +1,9 @@
 Next pieces
+  * Handouts
+
   * Results: comparison before and after
+    Rename drivers->pilots
+    Run: git rebase [-m] --onto HEAD $otherbranch
 
 * Early explanations
   * (Work from years ago and Peff and I's standoff over who would rewrite?)
