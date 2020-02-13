@@ -1207,8 +1207,9 @@ void detect_renames_and_copies(...)
           break detection is done.)
     \only<2->{{\color{green}
     \item If unique basename matches are found, compare the contents.
-          if they meet the rename threshold treat them as a rename without
-          comparing these files to any others. Otherwise...
+          If their similarity exceeds the rename threshold treat them
+          as a rename without looking for a ``better''
+          match.  Otherwise...
     }}
     \item If a path exists in base but not the side or vice versa, must
           exhaustively look through all pairings for best match.
