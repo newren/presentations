@@ -10,5 +10,25 @@ Next pieces
   * Original problem at Palantir that motivated my return
 
 * Amusing
+  * (Git Merge)^2
   * Ideal performance talk vs. this talk
+  * The tree traversals for renames are much cheaper than the others since
+    they are only walking down to one path instead of all paths.  But what
+    they fail to waste in each individual invocation, they make up for in
+    quantity of invocations.
+  * Someone had fun renaming files and putting their opinon into filenames.
+  * Like a two year old running around the house with nothing but a
+    diaper on who you've told to put their clothes back on, or a four
+    year old who is told that they need to get a bath.  They just
+    don't want to do it, and might take off running from you.  Maybe
+    you usually have enough energy to chase them down, but there are
+    some days when you may be tempted to ask, "How bad would it be if
+    I just don't bother?"
+  * "There's no way for us to know that the contents of these two
+     files are similar enough to be used together in a content merge.
+     (next slide) Just no way at all.  (pause) And if we have a long
+     sequence of commits to cherry-pick or rebase, we'll need to
+     re-detect all the upstream renames with every single commit."
+
+
   * "This work represents my attempt to continue to not believe them."
