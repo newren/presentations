@@ -1245,9 +1245,9 @@ void detect_renames_and_copies(...)
         \only<1>{Cherry-picking C..feature}
         \only<2-6>{Picking F}
         \only<7>{Picked F}
-        \only<8-14>{Picking G}
-        \only<15>{Picked G}
-        \only<16->{Cherry picking complete}
+        \only<8-15>{Picking G}
+        \only<16>{Picked G}
+        \only<17->{Cherry picking complete}
         \phantom{Cg}% To make sure all titles have the same height
         }
       \begin{tikzpicture}[node distance=10mm]
@@ -1280,7 +1280,7 @@ void detect_renames_and_copies(...)
           \node[ref]  (m) [above of=E] {master};
         }
 
-        \only<1-15| handout:1>{
+        \only<1-16| handout:1>{
           \path[bptr] (m) edge (E);
           %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
           %\path[bptr] (h) edge (m);
@@ -1300,24 +1300,24 @@ void detect_renames_and_copies(...)
           \node[commit] (F)  [right of=C] {F};
           \node[commit] (G)  [right of=F] {G};
         }
-        \only<9-14>{
+        \only<9-15>{
           \node[orphanCommit] (A) {A};
           \node[orphanCommit] (B)  [right of=A] {B};
           \node[orphanCommit] (D)  [right of=B] {D};
           \node[orphanCommit] (E)  [right of=D] {E};
           \node[orphanCommit] (C)  [below right of=A,yshift=-1em] {C};
         }
-        \only<14>{
+        \only<15>{
           \node[redCommit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
           \path[oprnt] (GS) edge[bend left] (G);
         }
-        \only<15->{
+        \only<16->{
           \node[commit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
         }
-        \only<14-| handout:2-3>{
+        \only<15-| handout:2-3>{
           \path[prnt] (GS) edge (FS);
         }
-        \only<16-| handout:1>{
+        \only<17-| handout:1>{
           \path[bptr] (m) edge[bend left] (GS);
           %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
           %\path[bptr] (h) edge (m);
@@ -1392,7 +1392,7 @@ void detect_renames_and_copies(...)
         F^*: & \texttt{000000}      & \texttt{1007ed}   \\
         G:   & \texttt{a70115}      & \texttt{000000}
       \end{array}
-      \right\rbrace \only<12->{\to \left\lbrace
+      \right\rbrace \only<13->{\to \left\lbrace
       \begin{array}{ll}
         \multicolumn{2}{c}{\textrm{buccaneer.c}\Rightarrow\textrm{viking.c}} \\
         F:   & \texttt{befa11}  \\
@@ -1401,10 +1401,10 @@ void detect_renames_and_copies(...)
       \end{array}\right\rbrace
       }$
 
-      \only<10-12>{
+      \only<10-13>{
         \phantom{$G^*$}
       }
-      \only<13->{
+      \only<14->{
       \hspace*{17.0em} $G^*:$ \;\;\,\texttt{fab1ed}
       }
     \end{block}
@@ -1412,12 +1412,14 @@ void detect_renames_and_copies(...)
     \end{center}
     \vfill
   }
-  \only<11-12>{
+  \only<11-13>{
     \begin{tikzpicture}[remember picture,overlay]
        \draw[mygreen,line width=1pt] (2.93, 2.13) ellipse (2.5em and 0.5em);
        \draw[orange, line width=1pt] (5.06, 1.65) ellipse (2.5em and 0.5em);
+       \only<12-13>{
        \draw[mygreen,line width=1pt] (9.39, 5.02) ellipse (2.5em and 0.5em);
        \draw[orange, line width=1pt] (9.39, 4.52) ellipse (2.5em and 0.5em);
+       }
     \end{tikzpicture}
   }
 
