@@ -19,6 +19,7 @@
 \tikzstyle{msg}=[tape,tape bend top=none,draw=MyRed!50,fill=MyRed!20]
 \tikzstyle{prnt}=[thick,-stealth']
 \tikzstyle{oprnt}=[black!50,dotted,-stealth',draw=black!50]
+\tikzstyle{bptrnext}=[black!80,dashed,-stealth',draw=black!80]
 \tikzstyle{bptr}=[thick,-latex']
 \tikzstyle{nextmsg}=[thick,-open triangle 45]
 \newcommand{\parent}[1]{\char94{#1}}
@@ -156,7 +157,7 @@
     \item Maintainability \& understandability
     \item API Quality (enable new features?)
     \item Correctness
-    \only<1>{
+    \only<1| handout:0>{
     \item Performance
     }
     \only<2>{
@@ -172,7 +173,7 @@
 \begin{frame}
   \frametitle{Types of performance strategies}
 
-  \only<1-6>{
+  \only<1-6| handout:1>{
   I have always enjoyed performance talks; they make me feel smarter:
   \only<2->{
   \begin{itemize}
@@ -185,7 +186,7 @@
     \item Inventing new algorithms
     }}}
   \end{itemize}
-  \only<6>{
+  \only<6| handout:1>{
     \begin{tikzpicture}[remember picture, overlay]
       \draw[myred,line width=3pt] ( 0,0.5) -- (11,2.7);
       \draw[myred,line width=3pt] (11,0.5) -- ( 0,2.7);
@@ -193,7 +194,7 @@
   }
   }}
 
-  \only<7->{
+  \only<7-| handout:2>{
   Actual performance strategies used:
   \only<8->{
   \begin{itemize}
@@ -301,11 +302,11 @@ static struct commit* merge_recursive_internal(side1, side2)
 \{
     ...
     \uncover<2->{
-    /* multiple merge bases? merge them together first. */\only<1-2>{
+    /* multiple merge bases? merge them together first. */\only<1-2| handout:0>{
     combined = bases[0];    }\only<3->{
     {\color{myred}combined = bases[0];}   }
     for (base in bases[1:])
-        combined = merge_recursive_internal(combined, base);  \only<1-2>{
+        combined = merge_recursive_internal(combined, base);  \only<1-2|handout:0>{
     discard_index();
     if (!inner_merge)
         repo_read_index();  }\only<3->{{\color{myred}
@@ -313,7 +314,7 @@ static struct commit* merge_recursive_internal(side1, side2)
     if (!inner_merge)
         repo_read_index();}   }
     }
-    result = merge_trees_internal(\only<1>{base}\only<2->{combined}, side1, side2);
+    result = merge_trees_internal(\only<1|handout:0>{base}\only<2->{combined}, side1, side2);
     ...
 \}
     \end{semiverbatim}
@@ -427,24 +428,24 @@ static struct commit* merge_recursive_internal(side1, side2)
     {\footnotesize\texttt{%
       \quad{}speak\_like\_a\_pirate(arrrgs);\\
       \quad{}%
-      \only<4>{{\color{myblue}?????}}%
-      \only<5-6>{{\color{myblue}explore\_sea(aye, matey);}}%
-      \only<7-8>{{\color{myblue}explore\_sea(me.love[0]);}}%
+      \only<4|handout:0>{{\color{myblue}?????}}%
+      \only<5-6|handout:0>{{\color{myblue}explore\_sea(aye, matey);}}%
+      \only<7-8|handout:0>{{\color{myblue}explore\_sea(me.love[0]);}}%
       \only<9->{{\color{myblue}explore\_sea(plus, plus);}}%
       \\
       \quad{}shiver(me.timbers);\\
     }}
   }
 
-  \only<6-10>{
+  \only<6-10|handout:1>{
   \vspace*{0.5\baselineskip}
   Which results in the following merge:\\
   {\footnotesize\texttt{%
     \quad{}speak\_like\_a\_pirate(arrrgs);\\
     \quad{}%
-    \only<7,9>{\qquad}%
-    \only<6>{{\color{mygreen}explore\_sea(me.love[0]);}}%
-    \only<8>{{\color{mygreen}explore\_sea(aye, matey);}}%
+    \only<7,9|handout:0>{\qquad}%
+    \only<6|handout:0>{{\color{mygreen}explore\_sea(me.love[0]);}}%
+    \only<8|handout:0>{{\color{mygreen}explore\_sea(aye, matey);}}%
     \only<10>{{\color{mygreen}
     <{}<{}<{}<{}<{}<{}< HEAD  \\
     \quad{}explore\_sea(aye, matey); \\
@@ -457,7 +458,7 @@ static struct commit* merge_recursive_internal(side1, side2)
   }}
   }
 
-  \only<11->{
+  \only<11-| handout:2>{
     \vspace*{-0.5\baselineskip}
     \begin{multicols}{2}
       Shorthand:\\
@@ -480,7 +481,7 @@ static struct commit* merge_recursive_internal(side1, side2)
     \end{multicols}%
   }
 
-  \only<13>{
+  \only<13| handout:2>{
     \vspace*{-0.5\baselineskip}
     {\footnotesize%
     
@@ -512,10 +513,6 @@ static struct commit* merge_recursive_internal(side1, side2)
   \end{itemize}
   }
 
-  %\only<1| handout:1>{Initial state:}
-  %\only<2| handout:2>{\cl{git fetch}}
-  %\only<3-4| handout:3>{\cl{git merge origin/master}}
-  %\only<5| handout:4>{\cl{git push}}
   \vspace*{-1.5em}
 
   \pause
@@ -551,21 +548,24 @@ static struct commit* merge_recursive_internal(side1, side2)
           \node[ref]    (m)  [above of=E] {master};
         }
 
-        \only<2-5| handout:1>{
+        \only<2-5>{
           \path[bptr] (m) edge (E);
         }
         \only<5>{
           \node[redCommit] (G)  [right of=E] {G};
         }
-        \only<6>{
+        \only<6| handout:0>{
           \node[commit] (G)  [right of=E] {G};
         }
-        \only<5-| handout:2-3>{
+        \only<5->{
           \path[prnt] (G) edge (E);
           \path[prnt] (G) edge[bend left] (F);
         }
-        \only<6>{
+        \only<6| handout:0>{
           \path[bptr] (m) edge (G);
+        }
+        \only<0| handout:1>{
+          \path[bptrnext] (m) edge (G);
         }
       \end{tikzpicture}
     \end{block}
@@ -586,12 +586,12 @@ static struct commit* merge_recursive_internal(side1, side2)
   \begin{center}
     \begin{minipage}{0.5\textwidth}
     \begin{block}{
-        \only<1>{Starting state}
-        \only<2-4>{Picking F}
-        \only<5>{Picked F}
-        \only<6-8>{Picking G}
-        \only<9>{Picked G}
-        \only<10->{Cherry picking complete}
+        \only<1  | handout:0>{Starting state}
+        \only<2-4| handout:1>{Picking F}
+        \only<5  | handout:0>{Picked F}
+        \only<6-8| handout:2>{Picking G}
+        \only<9  | handout:0>{Picked G}
+        \only<10-| handout:0>{Cherry picking complete}
         \phantom{Cg}% To make sure all titles have the same height
         }
       \begin{tikzpicture}[node distance=10mm]
@@ -604,7 +604,7 @@ static struct commit* merge_recursive_internal(side1, side2)
           \node[commit] (F)  [right of=C] {F};
           \node[commit] (G)  [right of=F] {G};
         }
-        \only<3-7>{
+        \only<3-7|handout:1>{
           \node[orphanCommit] (A)  {A};
           \node[orphanCommit] (B)  [right of=A] {B};
           \node[orphanCommit] (D)  [right of=B] {D};
@@ -624,19 +624,22 @@ static struct commit* merge_recursive_internal(side1, side2)
           \node[ref]  (m) [above of=E] {master};
         }
 
-        \only<1-9| handout:1>{
+        \only<1-9| handout:1-2>{
           \path[bptr] (m) edge (E);
           %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
           %\path[bptr] (h) edge (m);
         }
-        \only<4>{
+        \only<4| handout:1>{
           \node[redCommit] (FS) [right of=E, xshift=0.1em] {F$^*$};
           \path[oprnt] (FS) edge[bend left] (F);
         }
-        \only<4-| handout:2-3>{
+        \only<4-| handout:1-2>{
           \path[prnt] (FS) edge (E);
         }
-        \only<5->{
+        \only<0| handout:1>{
+          \path[bptrnext] (m) edge[bend left] (FS);
+        }
+        \only<5-| handout:2>{
           \node[commit] (A) {A};
           \node[commit] (B)  [right of=A] {B};
           \node[commit] (D)  [right of=B] {D};
@@ -644,27 +647,30 @@ static struct commit* merge_recursive_internal(side1, side2)
           \node[commit] (F)  [right of=C] {F};
           \node[commit] (G)  [right of=F] {G};
         }
-        \only<7-8>{
+        \only<7-8| handout:2>{
           \node[orphanCommit] (A) {A};
           \node[orphanCommit] (B)  [right of=A] {B};
           \node[orphanCommit] (D)  [right of=B] {D};
           \node[orphanCommit] (E)  [right of=D] {E};
           \node[orphanCommit] (C)  [below right of=A,yshift=-1em] {C};
         }
-        \only<8>{
+        \only<8| handout:2>{
           \node[redCommit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
           \path[oprnt] (GS) edge[bend left] (G);
         }
-        \only<9->{
+        \only<9-| handout:0>{
           \node[commit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
         }
-        \only<8-| handout:2-3>{
+        \only<8-| handout:2>{
           \path[prnt] (GS) edge (FS);
         }
-        \only<10-| handout:1>{
+        \only<10-| handout:0>{
           \path[bptr] (m) edge[bend left] (GS);
           %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
           %\path[bptr] (h) edge (m);
+        }
+        \only<0| handout:2>{
+          \path[bptrnext] (m) edge[bend left] (GS);
         }
       \end{tikzpicture}
     \end{block}
@@ -904,15 +910,15 @@ void detect_renames_and_copies(...)
                & buccaneer.c  & viking.c \\
         Base:
           &
-          \only<2-3>{5eac0a57}%
-          \only<4->{{\color{myred}5eac0a57}}%
+          \only<2-3|handout:0>{5eac0a57}%
+          \only<4- |handout:1-2>{{\color{myred}5eac0a57}}%
           &
           00000000  \\
         Side1:
           &
-          \only<2-3>{5caff01d}%
-          \only<4>{{\color{myred}5caff01d}}%
-          \only<5->{{\color{mygreen}5eac0a57}}
+          \only<2-3|handout:0>{5caff01d}%
+          \only<4  |handout:1>{{\color{myred}5caff01d}}%
+          \only<5- |handout:2>{{\color{mygreen}5eac0a57}}
           &
           00000000  \\
         Side2: & 00000000      &  0b57ac1e \\
@@ -923,14 +929,14 @@ void detect_renames_and_copies(...)
     Then:
       \begin{itemize}
         \item buccaneer.c:
-              \only<2>{modify/delete conflict}%
-              \only<3-5>{{\color{myred}modify/delete conflict}}%
-              \only<6->{{\color{mygreen}deleted as expected}}
+              \only<2  |handout:0>{modify/delete conflict}%
+              \only<3-5|handout:1>{{\color{myred}modify/delete conflict}}%
+              \only<6- |handout:2>{{\color{mygreen}deleted as expected}}
         \item viking.c: totally new file
         \item
-              \only<2>{no textual merging}%
-              \only<3-6>{\color{myred}no textual merging}%
-              \only<7->{no textual merging \color{mygreen}needed}
+              \only<2  |handout:0>{no textual merging}%
+              \only<3-6|handout:1>{\color{myred}no textual merging}%
+              \only<7- |handout:2>{no textual merging \color{mygreen}needed}
       \end{itemize}
 
     \vspace*{0.5\baselineskip}
@@ -938,27 +944,27 @@ void detect_renames_and_copies(...)
       {\footnotesize\texttt{%
         \quad{}\$ git status\\
         \quad{}...\\
-        \only<2>{
+        \only<2|handout:0>{
           \quad{}Unmerged paths:\\
           \qquad{}	deleted by us:   buccaneer.c\\
         }
-        \only<3-5>{{\color{myred}
+        \only<3-5|handout:1>{{\color{myred}
           \quad{}Unmerged paths:\\
           \qquad{}	deleted by us:   buccaneer.c\\
         }}
-        \only<6->{{\color{mygreen}
+        \only<6-|handout:2>{{\color{mygreen}
           \qquad\textit{(Clean)}\phantom{g}
           \vspace*{0.75\baselineskip}
         }}
       }}
   }
 
-  \only<3-7>{
+  \only<3-7|handout:1>{
     \vspace*{0.5\baselineskip}
     {\color{myred}When can we get away with this?}
   }
 
-  \only<8>{
+  \only<8|handout:2>{
     \vspace*{0.5\baselineskip}
     {\color{mygreen}
       Skip rename detection \textbf{if} source unmodified
@@ -978,10 +984,10 @@ void detect_renames_and_copies(...)
   \begin{minipage}{0.8\textwidth}
   \begin{block}{New Strategy}
     Skip rename detection \textbf{if} source unmodified on \textit{other}
-    side of history\only<1-3>{.
+    side of history\only<1-3|handout:0>{.
       \vspace*{\baselineskip}
     }%
-    \only<4->{
+    \only<4-|handout:1>{
       {\color{mygreen}
       and parent directory of source file exists on \textit{same} side of
       history}.
@@ -997,7 +1003,7 @@ void detect_renames_and_copies(...)
   \only<3->{
   \begin{itemize}
     \item
-          \only<3-4>{causes issues for directory rename detection}
+          \only<3-4|handout:0>{causes issues for directory rename detection}
           \only<5->{\redout{causes issues for directory rename detection}}
     \only<6->{
     \item rename/add conflict looks like add/add
@@ -1012,11 +1018,11 @@ void detect_renames_and_copies(...)
   \only<9->{
   \begin{itemize}
     \item
-      \only<9-12>{Different conflict-related files in the working copy}
+      \only<9-12|handout:0>{Different conflict-related files in the working copy}
       \only<13->{\redout{Different conflict-related files in the working copy}}
     \only<10->{
     \item
-      \only<10-12>{Different conflict-related entries in the index}
+      \only<10-12|handout:0>{Different conflict-related entries in the index}
       \only<13->{\redout{Different conflict-related entries in the index}}
     \only<11->{
     \item Different stdout; reports e.g. \texttt{CONFLICT(add/add)} instead
@@ -1116,7 +1122,7 @@ void detect_renames_and_copies(...)
     \begin{tabular}{l|l}
       Files in Base  &  Files in given side \\
       \hline
-        \only<1>{\phantom{document.html}}%
+        \only<1|handout:0>{\phantom{document.html}}%
         \only<2->{document.html}
       &
         \only<2->{build.log}
@@ -1143,7 +1149,7 @@ void detect_renames_and_copies(...)
       \\
 
       &
-        \only<1>{\phantom{source/{\color{orange}   orange.css}}}%
+        \only<1|handout:0>{\phantom{source/{\color{orange}   orange.css}}}%
         \only<2->{source/{\color{orange}   orange.css}}
       \\
 
@@ -1166,16 +1172,16 @@ void detect_renames_and_copies(...)
     {\footnotesize
     \begin{tabular}{l|l|l|l|l}
           &
-            \only<1-2>{\phantom{src/blue.css}}
+            \only<1-2|handout:0>{\phantom{src/blue.css}}
             \only<3->{src/{\color{blue}     blue.css}}
           &
-            \only<1-2>{\phantom{src/brown.css}}%
+            \only<1-2|handout:0>{\phantom{src/brown.css}}%
             \only<3->{src/{\color{mybrown}  brown.css}}
           &
-            \only<1-2>{\phantom{src/green.css}}%
+            \only<1-2|handout:0>{\phantom{src/green.css}}%
             \only<3->{src/{\color{mygreen}  green.css}}
           &
-            \only<1-2>{\phantom{src/red.css}}%
+            \only<1-2|handout:0>{\phantom{src/red.css}}%
             \only<3->{src/{\color{myred}    red.css}}
           \\
 
@@ -1185,7 +1191,7 @@ void detect_renames_and_copies(...)
       \only<3->{source/{\color{blue}     blue.css}}    &&&& \\
       \only<3->{source/{\color{mybrown}  brown.css}}   &&&& \\
       \only<3->{source/{\color{mygreen}  green.css}}   &&&& \\
-      \only<1-2>{\phantom{source/orange.css}}%
+      \only<1-2|handout:0>{\phantom{source/orange.css}}%
       \only<3->{source/{\color{orange}   orange.css}}  &&&& \\
       \only<3->{source/{\color{mypurple} purple.css}}  &&&& \\
       \only<3->{source/{\color{myred}    red.css}}     &&&& \\
@@ -1242,12 +1248,12 @@ void detect_renames_and_copies(...)
   \qquad
   \begin{minipage}{0.5\textwidth}
     \begin{block}{
-        \only<1>{Cherry-picking C..feature}
-        \only<2-6>{Picking F}
-        \only<7>{Picked F}
-        \only<8-15>{Picking G}
-        \only<16>{Picked G}
-        \only<17->{Cherry picking complete}
+        \only<1   |handout:0>{Cherry-picking C..feature}
+        \only<2-6 |handout:1>{Picking F}
+        \only<7   |handout:0>{Picked F}
+        \only<8-15|handout:2>{Picking G}
+        \only<16  |handout:0>{Picked G}
+        \only<17- |handout:0>{Cherry picking complete}
         \phantom{Cg}% To make sure all titles have the same height
         }
       \begin{tikzpicture}[node distance=10mm]
@@ -1260,7 +1266,7 @@ void detect_renames_and_copies(...)
           \node[commit] (F)  [right of=C] {F};
           \node[commit] (G)  [right of=F] {G};
         }
-        \only<3-9>{
+        \only<3-9|handout:2>{
           \node[orphanCommit] (A)  {A};
           \node[orphanCommit] (B)  [right of=A] {B};
           \node[orphanCommit] (D)  [right of=B] {D};
@@ -1280,19 +1286,19 @@ void detect_renames_and_copies(...)
           \node[ref]  (m) [above of=E] {master};
         }
 
-        \only<1-16| handout:1>{
+        \only<1-16| handout:1-2>{
           \path[bptr] (m) edge (E);
           %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
           %\path[bptr] (h) edge (m);
         }
-        \only<6>{
+        \only<6|handout:1>{
           \node[redCommit] (FS) [right of=E, xshift=0.1em] {F$^*$};
           \path[oprnt] (FS) edge[bend left] (F);
         }
-        \only<6-| handout:2-3>{
+        \only<6->{
           \path[prnt] (FS) edge (E);
         }
-        \only<7->{
+        \only<7-| handout:2>{
           \node[commit] (A) {A};
           \node[commit] (B)  [right of=A] {B};
           \node[commit] (D)  [right of=B] {D};
@@ -1300,24 +1306,24 @@ void detect_renames_and_copies(...)
           \node[commit] (F)  [right of=C] {F};
           \node[commit] (G)  [right of=F] {G};
         }
-        \only<9-15>{
+        \only<9-15| handout:2>{
           \node[orphanCommit] (A) {A};
           \node[orphanCommit] (B)  [right of=A] {B};
           \node[orphanCommit] (D)  [right of=B] {D};
           \node[orphanCommit] (E)  [right of=D] {E};
           \node[orphanCommit] (C)  [below right of=A,yshift=-1em] {C};
         }
-        \only<15>{
+        \only<15|handout:2>{
           \node[redCommit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
           \path[oprnt] (GS) edge[bend left] (G);
         }
-        \only<16->{
+        \only<16-|handout:0>{
           \node[commit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
         }
-        \only<15-| handout:2-3>{
+        \only<15-| handout:2>{
           \path[prnt] (GS) edge (FS);
         }
-        \only<17-| handout:1>{
+        \only<17-| handout:0>{
           \path[bptr] (m) edge[bend left] (GS);
           %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
           %\path[bptr] (h) edge (m);
@@ -1325,7 +1331,7 @@ void detect_renames_and_copies(...)
       \end{tikzpicture}
     \end{block}
   \end{minipage}%
-  \only<7->{%
+  \only<7-|handout:2>{%
   \hfill
   \begin{minipage}{0.32\textwidth}
     \begin{block}{}
@@ -1345,7 +1351,7 @@ void detect_renames_and_copies(...)
   }
 
   \vspace*{-\baselineskip}
-  \only<4-7>{
+  \only<4-7|handout:1>{
     \vfill
     \begin{center}
     \begin{minipage}{0.88\textwidth}
@@ -1368,7 +1374,7 @@ void detect_renames_and_copies(...)
       }
       $
 
-      \only<4-5>{
+      \only<4-5|handout:0>{
         \phantom{$F^*$}
       }
       \only<6-7>{
@@ -1379,7 +1385,7 @@ void detect_renames_and_copies(...)
     \end{center}
     \vfill
   }
-  \only<10->{
+  \only<10-|handout:2>{
     \vfill
     \begin{center}
     \begin{minipage}{0.88\textwidth}
@@ -1401,7 +1407,7 @@ void detect_renames_and_copies(...)
       \end{array}\right\rbrace
       }$
 
-      \only<10-13>{
+      \only<10-13|handout:0>{
         \phantom{$G^*$}
       }
       \only<14->{
@@ -1412,7 +1418,7 @@ void detect_renames_and_copies(...)
     \end{center}
     \vfill
   }
-  \only<11-13>{
+  \only<11-13|handout:2>{
     \begin{tikzpicture}[remember picture,overlay]
        \draw[mygreen,line width=1pt] (2.93, 2.13) ellipse (2.5em and 0.5em);
        \draw[orange, line width=1pt] (5.06, 1.65) ellipse (2.5em and 0.5em);
