@@ -26,9 +26,10 @@
 \colorlet{myred}{red!90!black} % slightly darker than normal red
 \colorlet{myblue}{cyan}        % plain cyan works; might consdier darkening
 \colorlet{mygreen}{green!70!black} % slightly darker than normal green
-\colorlet{mypurple}{magenta!80!black}
+\colorlet{mypurple}{red!45!blue}
+\definecolor{mybrown}{rgb}{0.45,0.28,0.13}
 \newcommand\redout{\bgroup\markoverwith
-    {\textcolor{red}{\rule[.5ex]{2pt}{0.8pt}}}\ULon
+    {\textcolor{myred}{\rule[.5ex]{2pt}{0.8pt}}}\ULon
 }
 
 \title{Scaling the Merge Machinery}
@@ -186,8 +187,8 @@
   \end{itemize}
   \only<6>{
     \begin{tikzpicture}[remember picture, overlay]
-      \draw[red,line width=3pt] ( 0,0.5) -- (11,2.7);
-      \draw[red,line width=3pt] (11,0.5) -- ( 0,2.7);
+      \draw[myred,line width=3pt] ( 0,0.5) -- (11,2.7);
+      \draw[myred,line width=3pt] (11,0.5) -- ( 0,2.7);
     \end{tikzpicture}
   }
   }}
@@ -302,12 +303,12 @@ static struct commit* merge_recursive_internal(...)
     \uncover<2->{
     /* multiple merge bases? merge them together first. */\only<1-2>{
     combined = bases[0];    }\only<3->{
-    {\color{red}combined = bases[0];}   }
+    {\color{myred}combined = bases[0];}   }
     for (base in bases[1:])
         combined = merge_recursive_internal(combined, base);  \only<1-2>{
     discard_index();
     if (!inner_merge)
-        repo_read_index();  }\only<3->{{\color{red}
+        repo_read_index();  }\only<3->{{\color{myred}
     discard_index();
     if (!inner_merge)
         repo_read_index();}   }
@@ -748,11 +749,11 @@ static struct commit* merge_recursive_internal(...)
     {\footnotesize\texttt{%
       \quad{}speak\_like\_a\_pirate(arrrgs);\\
       {\color{mygreen}
-      \quad{}<{}<{}<{}<{}<{}<{}< HEAD{\color{red}:buccaneer.c}  \\
+      \quad{}<{}<{}<{}<{}<{}<{}< HEAD{\color{myred}:buccaneer.c}  \\
       \quad{}explore\_sea(aye, matey); \\
       \quad{}=======\\
       \quad{}explore\_sea(me.love[0]); \\
-      \quad{}>{}>{}>{}>{}>{}>{}> branchB{\color{red}:viking.c}\\
+      \quad{}>{}>{}>{}>{}>{}>{}> branchB{\color{myred}:viking.c}\\
       }
       \quad{}shiver(me.timbers);\\
     }}
@@ -858,11 +859,11 @@ static struct commit* merge_recursive_internal(...)
 void detect_renames_and_copies(...)
 \{
     ...\uncover<2->{{\color{blue}
-    exact_count = find_different_name_same_hash();   }\uncover<3->{{\color{red}
+    exact_count = find_different_name_same_hash();   }\uncover<3->{{\color{myred}
     \only<1-3>{/* Keep all the source files as options for copies! */}   }}}
     for (dest_path in potential_rename_targets) \{   \uncover<2->{{\color{blue}
         if (already_paired(dest_path)) continue;   }}
-        for (source_path in potential_rename_sources) \{   \uncover<3->{\uncover<4->{{\color{green}
+        for (source_path in potential_rename_sources) \{   \uncover<3->{\uncover<4->{{\color{mygreen}
             if (!DETECT_COPIES &&
                 already_paired(source_path))
                 continue;   }}}
@@ -904,14 +905,14 @@ void detect_renames_and_copies(...)
         Base:
           &
           \only<2-3>{5eac0a57}%
-          \only<4->{{\color{red}5eac0a57}}%
+          \only<4->{{\color{myred}5eac0a57}}%
           &
           00000000  \\
         Side1:
           &
           \only<2-3>{5caff01d}%
-          \only<4>{{\color{red}5caff01d}}%
-          \only<5->{{\color{green}5eac0a57}}
+          \only<4>{{\color{myred}5caff01d}}%
+          \only<5->{{\color{mygreen}5eac0a57}}
           &
           00000000  \\
         Side2: & 00000000      &  0b57ac1e \\
@@ -923,13 +924,13 @@ void detect_renames_and_copies(...)
       \begin{itemize}
         \item buccaneer.c:
               \only<2>{modify/delete conflict}%
-              \only<3-5>{{\color{red}modify/delete conflict}}%
-              \only<6->{{\color{green}deleted as expected}}
+              \only<3-5>{{\color{myred}modify/delete conflict}}%
+              \only<6->{{\color{mygreen}deleted as expected}}
         \item viking.c: totally new file
         \item
               \only<2>{no textual merging}%
-              \only<3-6>{\color{red}no textual merging}%
-              \only<7->{no textual merging \color{green}needed}
+              \only<3-6>{\color{myred}no textual merging}%
+              \only<7->{no textual merging \color{mygreen}needed}
       \end{itemize}
 
     \vspace*{0.5\baselineskip}
@@ -941,11 +942,11 @@ void detect_renames_and_copies(...)
           \quad{}Unmerged paths:\\
           \qquad{}	deleted by us:   buccaneer.c\\
         }
-        \only<3-5>{{\color{red}
+        \only<3-5>{{\color{myred}
           \quad{}Unmerged paths:\\
           \qquad{}	deleted by us:   buccaneer.c\\
         }}
-        \only<6->{{\color{green}
+        \only<6->{{\color{mygreen}
           \qquad\textit{(Clean)}\phantom{g}
           \vspace*{0.75\baselineskip}
         }}
@@ -954,12 +955,12 @@ void detect_renames_and_copies(...)
 
   \only<3-7>{
     \vspace*{0.5\baselineskip}
-    {\color{red}When can we get away with this?}
+    {\color{myred}When can we get away with this?}
   }
 
   \only<8>{
     \vspace*{0.5\baselineskip}
-    {\color{green}
+    {\color{mygreen}
       Skip rename detection \textbf{if} source unmodified
       on \textit{other} side of history.
     }
@@ -981,7 +982,7 @@ void detect_renames_and_copies(...)
       \vspace*{\baselineskip}
     }%
     \only<4->{
-      {\color{green}
+      {\color{mygreen}
       and parent directory of source file exists on \textit{same} side of
       history}.
     }
@@ -1026,7 +1027,7 @@ void detect_renames_and_copies(...)
 
   \only<12->{
   After unifying file collision conflict handling...%
-  \only<14>{{\color{green}stdout is only difference.}}
+  \only<14>{{\color{mygreen}stdout is only difference.}}
   }
 
 \end{frame}
@@ -1126,19 +1127,19 @@ void detect_renames_and_copies(...)
         \only<2->{document.html}
       \\
 
-        \only<2->{src/{\color{brown}       brown.css}}
+        \only<2->{src/{\color{mybrown}     brown.css}}
       &
         \only<2->{source/{\color{blue}     blue.css}}
       \\
 
-        \only<2->{src/{\color{green}       green.css}}
+        \only<2->{src/{\color{mygreen}     green.css}}
       &
-        \only<2->{source/{\color{brown}    brown.css}}
+        \only<2->{source/{\color{mybrown}  brown.css}}
       \\
 
-        \only<2->{src/{\color{red}         red.css}}
+        \only<2->{src/{\color{myred}       red.css}}
       &
-        \only<2->{source/{\color{green}    green.css}}
+        \only<2->{source/{\color{mygreen}  green.css}}
       \\
 
       &
@@ -1151,7 +1152,7 @@ void detect_renames_and_copies(...)
       \\
 
       &
-        \only<2->{source/{\color{red}      red.css}}
+        \only<2->{source/{\color{myred}    red.css}}
 
     \end{tabular}
     }
@@ -1169,25 +1170,25 @@ void detect_renames_and_copies(...)
             \only<3->{src/{\color{blue}     blue.css}}
           &
             \only<1-2>{\phantom{src/brown.css}}%
-            \only<3->{src/{\color{brown}    brown.css}}
+            \only<3->{src/{\color{mybrown}  brown.css}}
           &
             \only<1-2>{\phantom{src/green.css}}%
-            \only<3->{src/{\color{green}    green.css}}
+            \only<3->{src/{\color{mygreen}  green.css}}
           &
             \only<1-2>{\phantom{src/red.css}}%
-            \only<3->{src/{\color{red}      red.css}}
+            \only<3->{src/{\color{myred}    red.css}}
           \\
 
       \hline
 
       \only<3->{build.log}           &&&& \\
       \only<3->{source/{\color{blue}     blue.css}}    &&&& \\
-      \only<3->{source/{\color{brown}    brown.css}}   &&&& \\
-      \only<3->{source/{\color{green}    green.css}}   &&&& \\
+      \only<3->{source/{\color{mybrown}  brown.css}}   &&&& \\
+      \only<3->{source/{\color{mygreen}  green.css}}   &&&& \\
       \only<1-2>{\phantom{source/orange.css}}%
       \only<3->{source/{\color{orange}   orange.css}}  &&&& \\
       \only<3->{source/{\color{mypurple} purple.css}}  &&&& \\
-      \only<3->{source/{\color{red}      red.css}}     &&&& \\
+      \only<3->{source/{\color{myred}    red.css}}     &&&& \\
 
 
     \end{tabular}
@@ -1206,7 +1207,7 @@ void detect_renames_and_copies(...)
     \item If the same path exists in base and a side, those paths are
           always assumed to be different versions of the same file.  (No
           break detection is done.)
-    \only<2->{{\color{green}
+    \only<2->{{\color{mygreen}
     \item If unique basename matches are found, compare the contents.
           If their similarity exceeds the rename threshold treat them
           as a rename without looking for a ``better''
