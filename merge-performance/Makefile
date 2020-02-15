@@ -1,7 +1,7 @@
 .PHONY: clean slides handouts all tag
 BASE=merge-performance
 SLIDES_PDF=$(BASE)-slides.pdf
-HANDOUTS_PDF=$(BASE)-handouts.pdf
+HANDOUTS_PDF=$(BASE)-handout.pdf
 
 #TEXMF_PATHS=$(shell ./texmf-paths.sh)
 #PDFLATEX=TEXINPUTS=.:$(TEXMF_PATHS): pdflatex -halt-on-error
@@ -26,7 +26,7 @@ $(SLIDES_PDF): $(BASE).tex $(OTHER_FILES)
 	$(PDFLATEX) -jobname merge-performance-slides "\def\slides{}\input{"$(BASE).tex"}"
 	$(PDFLATEX) -jobname merge-performance-slides "\def\slides{}\input{"$(BASE).tex"}"
 
-$(HANDOUTS_PDF): $(BASE).tex #$(OTHER_FILES)
+$(HANDOUTS_PDF): $(BASE).tex $(OTHER_FILES)
 	$(PDFLATEX) -jobname merge-performance-handout "\def\handout{}\input{"$(BASE).tex"}"
 	$(PDFLATEX) -jobname merge-performance-handout "\def\handout{}\input{"$(BASE).tex"}"
 
