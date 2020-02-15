@@ -11,7 +11,34 @@ Next pieces
 
 * Amusing
   * (Git Merge)^2
-  * Ideal performance talk vs. this talk
+     v1 & v2:
+       "Yes, this means I'm going to be talking about 'Git Merge'.  And
+       I'm talking at 'Git Merge'.  I guess I should disambiguate.
+       (pause) Much better, that won't be confusing.
+
+     v1:
+       Today I will be talking in particular about quadratic behavior
+       in 'Git Merge'.  (pause, turn around and look at slides.)
+       Yeah, that title's totally unambiguous."
+
+     v2:
+       (pause) So today I'm going to be talking about 'Git Merge' at
+       'Git Merge' in particular I'll be focusing on quadratic
+       behavior found in within it.  (pause) Hopefully, it'll be
+       fun.
+
+     v3:
+       So yes, this means that today I'm talking at Git Merge (slight
+       pause, next slide) about Git Merge, and in particular I'll be
+       focusing on quadratic behavior found within it.
+
+  * "This is not one of those talks; instead I'll be using some different
+     performance strategies"
+  * "For those of you who think this is going to be a talk extolling the
+     virtues of laziness, I have one more strategy up my sleeve.  (pause)
+     Avoiding work is so nice that I want to find more ways to get away
+     with it.  (pause)  Someone please make sure that my kids never see
+     this talk."
   * The tree traversals for renames are much cheaper than the others since
     they are only walking down to one path instead of all paths.  But what
     they fail to waste in each individual invocation, they make up for in
