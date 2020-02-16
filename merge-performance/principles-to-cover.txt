@@ -1,6 +1,4 @@
 Next pieces
-  * Handouts
-
   * Results: comparison before and after
     Rename drivers->pilots
     Run: git rebase [-m] --onto HEAD $otherbranch
@@ -11,39 +9,28 @@ Next pieces
 
 * Amusing
   * (Git Merge)^2
-     v1 & v2:
-       "Yes, this means I'm going to be talking about 'Git Merge'.  And
-       I'm talking at 'Git Merge'.  I guess I should disambiguate.
-       (pause) Much better, that won't be confusing.
-
-     v1:
-       Today I will be talking in particular about quadratic behavior
-       in 'Git Merge'.  (pause, turn around and look at slides.)
-       Yeah, that title's totally unambiguous."
-
-     v2:
-       (pause) So today I'm going to be talking about 'Git Merge' at
-       'Git Merge' in particular I'll be focusing on quadratic
-       behavior found in within it.  (pause) Hopefully, it'll be
-       fun.
-
      v3:
        So yes, this means that today I'm talking at Git Merge (slight
        pause, next slide) about Git Merge, and in particular I'll be
        focusing on quadratic behavior found within it.
 
-  * "This is not one of those talks; instead I'll be using some different
-     performance strategies"
+  * "Sadly, I need to apologize -- this is not one of those talks;
+     instead I'll be using some different performance strategies"
+
   * "For those of you who think this is going to be a talk extolling the
      virtues of laziness, I have one more strategy up my sleeve.  (pause)
      Avoiding work is so nice that I want to find more ways to get away
      with it.  (pause)  Someone please make sure that my kids never see
      this talk."
-  * The tree traversals for renames are much cheaper than the others since
-    they are only walking down to one path instead of all paths.  But what
-    they fail to waste in each individual invocation, they make up for in
-    quantity of invocations.
-  * Someone had fun renaming files and putting their opinon into filenames.
+
+  * The tree traversals in the last category are much cheaper since
+    they only follow the path to one filename instead of walking all
+    paths.  But what they fail to waste in each individual invocation,
+    they make up for in quantity of invocations.
+
+  * Someone had fun renaming files and putting their opinon into
+    filenames.
+
   * Like a two year old running around the house with nothing but a
     diaper on who you've told to put their clothes back on, or a four
     year old who is told that they need to get a bath.  They just
@@ -51,11 +38,29 @@ Next pieces
     you usually have enough energy to chase them down, but there are
     some days when you may be tempted to ask, "How bad would it be if
     I just don't bother?"
+
   * "There's no way for us to know that the contents of these two
      files are similar enough to be used together in a content merge.
      (next slide) Just no way at all.  (pause) And if we have a long
      sequence of commits to cherry-pick or rebase, we'll need to
      re-detect all the upstream renames with every single commit."
 
+One that I didn't manage to work in:
 
   * "This work represents my attempt to continue to not believe them."
+
+Notes to self on certain slides:
+  * [Beginning] "but the merge machinery isn't actually just about git-merge,
+    it also affects several other commands in Git (show slide), including
+    rebase and revert and several others, so it's an important building block
+    to many parts of git."
+
+  * [Three-way content merge] <DON'T FORGET about the two hashes matching
+    sentence before providing transition words to the next slide!>
+
+  * [Three-way Merging] "Can be though of as changes between A and E
+    being applied to F, or as the changes between A and F being
+    applied to E."
+
+  * [Remembering previous work] <Early in slide mention that master has
+    renamed a lot of files>
