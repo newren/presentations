@@ -970,10 +970,10 @@ void detect_renames_and_copies(...)
   }
 
   \only<8|handout:2>{
-    \vspace*{0.5\baselineskip}
+    %\vspace*{0.5\baselineskip}
     {\color{mygreen}
-      Skip rename detection \textbf{if} source unmodified
-      on \textit{other} side of history.
+      Exclude potential source from rename detection \textbf{if} it is
+      unmodified by \textit{other} side of history.
     }
   }
 
@@ -988,8 +988,8 @@ void detect_renames_and_copies(...)
   \begin{center}
   \begin{minipage}{0.8\textwidth}
   \begin{block}{New Strategy}
-    Skip rename detection \textbf{if} source unmodified on \textit{other}
-    side of history\only<1-3|handout:0>{.
+    Exclude potential source from rename detection \textbf{if} it is
+    unmodified by \textit{other} side of history\only<1-3|handout:0>{.
       \vspace*{\baselineskip}
     }%
     \only<4-|handout:1>{
@@ -1052,9 +1052,9 @@ void detect_renames_and_copies(...)
   \begin{center}
   \begin{minipage}{0.8\textwidth}
   \begin{block}{New Strategy}
-    Skip rename detection \textbf{if} source unmodified on \textit{other}
-    side of history and parent directory of source file exists
-    on \textit{same} side of history.
+    Exclude potential source from rename detection \textbf{if} it is
+    unmodified by \textit{other} side of history and parent directory
+    of source file exists on \textit{same} side of history.
   \end{block}
   \end{minipage}
   \end{center}
