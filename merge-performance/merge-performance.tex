@@ -201,16 +201,16 @@
   Actual performance strategies used:
   \only<8->{
   \begin{itemize}
-    \item Avoid well-known slow constructs
-    \only<9->{
+    %\item Avoid well-known slow constructs
+    %\only<9->{
     \item Don't do unnecessary work
-    \only<10->{
+    \only<9->{
     \item Don't redo work
-    \only<11->{
+    \only<10->{
     \item Don't redo unnecessary work
-    \only<12->{
+    \only<11->{
     \item Fudge "unnecessary"
-    }}}}
+    }}}%}
   \end{itemize}
   }}
 
@@ -233,6 +233,7 @@
   \end{center}
 \end{frame}
 
+\begin{comment}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\section[Simple Wins]{Simple performance wins}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -387,6 +388,7 @@ static struct commit* merge_recursive_internal(side1, side2)
   \end{center}
 
 \end{frame}
+\end{comment}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section[Background]{Merging and renames background}
@@ -1441,6 +1443,13 @@ void detect_renames_and_copies(...)
   \frametitle{But wait, there's more!}
 
   \begin{itemize}[<+(1)->]
+
+    \item Avoid accidentally quadratic behavior
+
+    \item Restructure to eliminate quasi-quadratic index insertion and
+          removal
+
+    \item Fewer tree traversals
 
     \item Extend ``partial capitulation'' ideas from \textit{file}
           renames to \textit{directory} renames
