@@ -1103,8 +1103,8 @@ void detect_renames_and_copies(...)
     \begin{center}
     \begin{minipage}{0.65\textwidth}
     \begin{block}{\begin{center}Fun fact\end{center}}
-        80\% of renames in the linux kernel repository do not change the
-        basename of the file, just the directory in which it is found.
+        Over 75\% of renames in the linux kernel repository do not change
+        the basename of the file, just the directory in which it is found.
     \end{block}
     \end{minipage}
     \end{center}
@@ -1231,11 +1231,12 @@ void detect_renames_and_copies(...)
   \only<3->{
     \vfill
     \begin{center}
-    \begin{minipage}{0.4\textwidth}
-    \begin{block}{\begin{center}Common Cases\end{center}}
-      \begin{center}
-        O($M*N$) $\to$ O(min($M,N$))
-      \end{center}
+    \begin{minipage}{0.5\textwidth}
+    \begin{block}{\begin{center}\only<3-5>{Improvement}\only<6>{If enough matching basenames...}\end{center}}
+        \quad
+        O($M*N$) $\to$
+          \only<4-5>{O((M-B)*(N-B) \only<4>{\phantom{+ B}}\only<5>{+ B})}
+          \only<6>{O(minimum($M,N$))}
     \end{block}
     \end{minipage}
     \end{center}
