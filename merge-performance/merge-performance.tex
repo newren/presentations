@@ -1021,8 +1021,8 @@ void detect_renames_and_copies(...)
           Side1:
             &
             \only<2  |handout:0>{5caff01d}%
-            \only<3  |handout:1>{{\color{myred}5caff01d}}%
-            \only<4- |handout:2>{{\color{mygreen}5eac0a57}}
+            \only<3  |handout:0>{{\color{myred}5caff01d}}%
+            \only<4- |handout:1-2>{{\color{mygreen}5eac0a57}}
             &
             00000000  \\
           Side2: & 00000000      &  c01055a1 \\
@@ -1097,9 +1097,9 @@ void detect_renames_and_copies(...)
         \begin{itemize}
           \item buccaneer.c: removed
           \item viking.c:
-                  \only<1-4>{contains merged content}%
-                  \only<5>{{\color{myred}contains merged content}}%
-                  \only<6->{{\color{mygreen}no content merge was needed}}
+                  \only<1-4|handout:0>{contains merged content}%
+                  \only<5  |handout:1>{{\color{myred}contains merged content}}%
+                  \only<6- |handout:2>{{\color{mygreen}no content merge was needed}}
         \end{itemize}
 
         \vspace*{1em}
