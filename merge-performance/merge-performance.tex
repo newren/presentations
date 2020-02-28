@@ -126,7 +126,34 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection[Changes]{Overhaul}
+\subsection[Issues]{The journey}
+\begin{frame}
+  \frametitle{The journey}
+
+  A few years ago...
+
+  \begin{minipage}{0.88\textwidth}
+  \begin{block}{Issues starting the journey}
+    {\footnotesize
+    \begin{itemize}
+      \item cherry-pick would fail to detect renames and fail to notify
+            about needed merge.renameLimit
+      \item cherry-pick would ignore merge.renameLimit > 32767
+      \item if directory renames involved, files would be left in wrong
+            directory
+      \item people wrote custom purpose scripts to cherry-pick things
+      \item after fixing merge.renameLimit, cherry-picking small patches
+            would take more than 9 minutes.
+    \end{itemize}
+    }
+  \end{block}
+  \end{minipage}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Challenges]{Overhaul}
 \begin{frame}
   \frametitle{Quotes}
 
@@ -1689,6 +1716,45 @@ void detect_renames_and_copies(...)
     https://github.com/newren/git/tree/ort
   \end{center}
   \vfill
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{The journey, redux}
+
+  \vspace*{-0.5\baselineskip}
+  \begin{minipage}{0.88\textwidth}
+  \begin{block}{Issues starting the journey}
+    {\footnotesize
+    \begin{itemize}
+      \item cherry-pick would fail to detect renames and fail to notify
+            about needed merge.renameLimit
+      \item cherry-pick would ignore merge.renameLimit > 32767
+      \item if directory renames involved, files would be left in wrong
+            directory
+      \item people wrote custom purpose scripts to cherry-pick things
+      \item after fixing merge.renameLimit, cherry-picking small patches
+            would take more than 9 minutes.
+    \end{itemize}
+    }
+  \end{block}
+  \end{minipage}
+
+  \vspace*{\baselineskip}
+  {\small
+  \only<2->{
+    When I told folks a few years ago that "You don't need these
+    special scripts to cherry pick things; just set merge.renameLimit
+    to something higher," they responded that merge.renameLimit didn't
+    work.\\[1em]
+
+    \only<3->{I didn't believe them.\\[1em]}
+
+    \only<4>{My previous changes and this performance work
+      represent my attempt to continue to not believe them.  :-)}
+  }}
 
 \end{frame}
 
