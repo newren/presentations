@@ -64,6 +64,7 @@
   %}
 \end{frame}
 
+\ifx\handout\undefined
 \title{Git Merge}
 \begin{frame}
   \titlepage
@@ -73,6 +74,7 @@
 \begin{frame}
   \titlepage
 \end{frame}
+\fi
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section[Overhaul]{``Merge machinery''}
@@ -1232,10 +1234,10 @@ void detect_renames_and_copies(...)
     \vfill
     \begin{center}
     \begin{minipage}{0.5\textwidth}
-    \begin{block}{\begin{center}\only<3-5>{Improvement}\only<6>{If enough matching basenames...}\end{center}}
+    \begin{block}{\begin{center}\only<3-5|handout:0>{Improvement}\only<6>{If enough matching basenames...}\end{center}}
         \quad
         O($M*N$) $\to$
-          \only<4-5>{O((M-B)*(N-B) \only<4>{\phantom{+ B}}\only<5>{+ B})}
+          \only<4-5|handout:0>{O((M-B)*(N-B) \only<4>{\phantom{+ B}}\only<5>{+ B})}
           \only<6>{O(minimum($M,N$))}
     \end{block}
     \end{minipage}
