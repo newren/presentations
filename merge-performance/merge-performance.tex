@@ -435,24 +435,26 @@ static struct commit* merge_recursive_internal(side1, side2)
     {\footnotesize\texttt{%
       \quad{}speak\_like\_a\_pirate(arrrgs);\\
       \quad{}%
-      \only<4|handout:0>{{\color{myblue}?????}}%
-      \only<5-6|handout:0>{{\color{myblue}explore\_sea(aye, matey);}}%
-      \only<7-8|handout:0>{{\color{myblue}explore\_sea(me.love[0]);}}%
+      %\only<4|handout:0>{{\color{myblue}?????}}%
+      \only<4-8|handout:0>{{\color{myblue}?????}}%
+      %\only<5-6|handout:0>{{\color{myblue}explore\_sea(aye, matey);}}%
+      %\only<7-8|handout:0>{{\color{myblue}explore\_sea(me.love[0]);}}%
       \only<9->{{\color{myblue}explore\_sea(plus, plus);}}%
       \\
       \quad{}shiver(me.timbers);\\
     }}
   }
 
-  \only<6-10|handout:1>{
+  %\only<6-10|handout:1>{
+  \only<10|handout:1>{
   \vspace*{0.5\baselineskip}
   Which results in the following merge:\\
   {\footnotesize\texttt{%
     \quad{}speak\_like\_a\_pirate(arrrgs);\\
     \quad{}%
-    \only<7,9|handout:0>{\qquad}%
-    \only<6|handout:0>{{\color{mygreen}explore\_sea(me.love[0]);}}%
-    \only<8|handout:0>{{\color{mygreen}explore\_sea(aye, matey);}}%
+    %\only<7,9|handout:0>{\qquad}%
+    %\only<6|handout:0>{{\color{mygreen}explore\_sea(me.love[0]);}}%
+    %\only<8|handout:0>{{\color{mygreen}explore\_sea(aye, matey);}}%
     \only<10>{{\color{mygreen}
     <{}<{}<{}<{}<{}<{}< HEAD  \\
     \quad{}explore\_sea(aye, matey); \\
