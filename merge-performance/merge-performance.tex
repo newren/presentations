@@ -697,80 +697,109 @@ static struct commit* merge_recursive_internal(side1, side2)
 \begin{frame}
   \frametitle{Why renames are important}
 
-  If a rename is not detected:\\[0.25em]
-    {\footnotesize\texttt{%
-    \begin{tabular}{lll}
-             & buccaneer.c  & viking.c  \\
-      Base:  & ba771e5      & 0000000 \\
-      Side1: & e5ca185      & 0000000 \\
-      Side2: & 0000000      & defea75 \\
-    \end{tabular}
-    }}
+  \vspace*{-\baselineskip}
+  {\scriptsize
+  \begin{multicols}{2}
+    \begin{minipage}{0.45\textwidth}
+    \begin{block}{If a rename is not detected:}
+        {\texttt{%
+        \begin{tabular}{lll}
+                 & buccaneer.c  & viking.c  \\
+          Base:  & ba771e5      & 0000000 \\
+          Side1: & e5ca185      & 0000000 \\
+          Side2: & 0000000      & defea75 \\
+        \end{tabular}
+        }}
 
-  \only<2->{
-    \vspace*{1em}
-    Then:
-    \begin{itemize}[<+(1)->]
-      \item buccaneer.c: modify/delete conflict
-      \item viking.c: totally new file
-      \item no textual merging
-    \end{itemize}
-  }
-
-  \only<5->{
-    \vspace*{1em}
-    As reported by git:\\[0.5em]
-    {\footnotesize\texttt{%
-      \quad{}\$ git status\\
-      \quad{}...\\
-      \quad{}Unmerged paths:\\
-      \qquad{}	deleted by them:   buccaneer.c\\
-    }}
-  }
-
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}
-  \frametitle{Why renames are important}
-
-  \only<1->{
-    \vspace*{0.6em}
-    If we detect renames...\\
-    {\footnotesize
-    \qquad renames from Base$\to$Side1: <omitted> \\
-    \qquad renames from Base$\to$Side2: buccaneer.c $\Rightarrow$ viking.c, <others ommitted>\\
-  }}
-
-  \only<2->{
-    \vspace*{0.6em}
-    ...we can treat the two files as different versions of one file...\\
-    {\footnotesize\texttt{%
-    \begin{tabular}{ll}
-             & buccaneer.c $\Rightarrow$ viking.c   \\
-      Base:  & ba771e5 \\
-      Side1: & e5ca185 \\
-      Side2: & defea75 \\
-    \end{tabular}
-    }}
-  }
-
-  \only<3->{
-    \vspace*{0.6em}
-    ...and do a three-way content merge:\\[0.25em]
-    {\footnotesize\texttt{%
-      \quad{}speak\_like\_a\_pirate(arrrgs);\\
-      {\color{mygreen}
-      \quad{}<{}<{}<{}<{}<{}<{}< HEAD{\color{myred}:buccaneer.c}  \\
-      \quad{}explore\_sea(aye, matey); \\
-      \quad{}=======\\
-      \quad{}explore\_sea(me.love[0]); \\
-      \quad{}>{}>{}>{}>{}>{}>{}> branchB{\color{myred}:viking.c}\\
+      \uncover<2->{
+        \vspace*{1em}
+        Then:
+        \begin{itemize}[<+(1)->]
+          \item buccaneer.c: modify/delete conflict
+          \item viking.c: totally new file
+          \item no textual merging
+        \end{itemize}
       }
-      \quad{}shiver(me.timbers);\\
-    }}
-   }
+
+      \uncover<5->{
+        \vspace*{1em}
+        As reported by git status:\\[0.5em]
+        {\texttt{%
+          \quad{}Changes to be committed:\\
+          \quad{}\enskip{}      new file: viking.c\\
+          \quad{}Unmerged paths:\\
+          \quad{}\enskip{}	deleted by them: buccaneer.c\\
+        }}
+      }
+    \end{block}
+    \end{minipage}
+
+  \columnbreak
+
+    \only<6->{
+    \begin{minipage}{0.48\textwidth}
+    \begin{block}{If we detect renames on each side of history:}
+        \texttt{%
+        \begin{tabular}{ll}
+                  & buccaneer.c $\Rightarrow$ viking.c   \\
+          Base:   & ba771e5 \\
+          Side1:  & e5ca185 \\
+          Side2:  & defea75 \\
+          \uncover<7->{%
+          Merged: & acc0575
+          }
+        \end{tabular}
+        }
+
+      \uncover<8->{
+        \vspace*{1em}
+        Then:
+        \begin{itemize}[<+(4)->]
+          \item buccaneer.c: removed
+          \item viking.c: contains merged content
+        \end{itemize}
+      }
+
+      \uncover<10->{
+        \vspace*{1em}
+        As reported by git status:\\[0.5em]
+        EITHER\\
+        {\texttt{%
+          \quad{}Changes to be committed:\\
+          \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+        }}
+        OR\\
+        {\texttt{%
+          \quad{}Changes to be committed:\\
+          \quad{}\,	deleted: buccaneer.c \\
+          \quad{}Unmerged paths:\\
+          \quad{}\,\,	both modified:   viking.c\\
+        }}
+      }
+
+%      \begin{comment}
+%      \only<11->{
+%        \vspace*{0.6em}
+%        ...and do a three-way content merge:\\[0.25em]
+%        {\texttt{%
+%          \quad{}speak\_like\_a\_pirate(arrrgs);\\
+%          {\color{mygreen}
+%          \quad{}<{}<{}<{}<{}<{}<{}< HEAD{\color{myred}:buccaneer.c}  \\
+%          \quad{}explore\_sea(aye, matey); \\
+%          \quad{}=======\\
+%          \quad{}explore\_sea(me.love[0]); \\
+%          \quad{}>{}>{}>{}>{}>{}>{}> branchB{\color{myred}:viking.c}\\
+%          }
+%          \quad{}shiver(me.timbers);\\
+%        }}
+%       }
+%      \end{comment}
+
+    \end{block}
+    \end{minipage}
+    } % end of \only<6->
+  \end{multicols}
+  } % end of \scriptsize
 
 \end{frame}
 
