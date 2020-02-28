@@ -1452,8 +1452,8 @@ void detect_renames_and_copies(...)
         \only<2-6 |handout:1>{Picking F}
         \only<7   |handout:0>{Picked F}
         \only<8-15|handout:2>{Picking G}
-        \only<16  |handout:0>{Picked G}
-        \only<17- |handout:0>{Cherry picking complete}
+        %\only<16  |handout:0>{Picked G}
+        %\only<17- |handout:0>{Cherry picking complete}
         \phantom{Cg}% To make sure all titles have the same height
         }
       \begin{tikzpicture}[node distance=10mm]
@@ -1486,7 +1486,8 @@ void detect_renames_and_copies(...)
           \node[ref]  (m) [above of=E] {master};
         }
 
-        \only<1-16| handout:1-2>{
+        %\only<1-16| handout:1-2>{
+        \only<1-15| handout:1-2>{
           \path[bptr] (m) edge (E);
           %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
           %\path[bptr] (h) edge (m);
@@ -1517,17 +1518,17 @@ void detect_renames_and_copies(...)
           \node[redCommit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
           \path[oprnt] (GS) edge[bend left] (G);
         }
-        \only<16-|handout:0>{
-          \node[commit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
-        }
+        %\only<16-|handout:0>{
+        %  \node[commit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
+        %}
         \only<15-| handout:2>{
           \path[prnt] (GS) edge (FS);
         }
-        \only<17-| handout:0>{
-          \path[bptr] (m) edge[bend left] (GS);
-          %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
-          %\path[bptr] (h) edge (m);
-        }
+        %\only<17-| handout:0>{
+        %  \path[bptr] (m) edge[bend left] (GS);
+        %  %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
+        %  %\path[bptr] (h) edge (m);
+        %}
       \end{tikzpicture}
     \end{block}
   \end{minipage}%
