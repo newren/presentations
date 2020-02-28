@@ -1627,7 +1627,7 @@ void detect_renames_and_copies(...)
 \begin{frame}
   \frametitle{But wait, there's more!}
 
-  \begin{itemize}[<+(1)->]
+  \begin{itemize}
 
     \item Avoid accidentally quadratic behavior
 
@@ -1647,9 +1647,10 @@ void detect_renames_and_copies(...)
     \item Avoid updating the index or working tree if not needed
 
       \begin{itemize}
-        \item Helps with new sparse-checkout command
+        \item Helps with new \only<1>{sparse-checkout}\only<2->{{\color{mygreen}sparse-checkout}} command
         \item Accelerates rebases and cherry-picks
-        \item Avoids unnecessary recompilation after a rebase
+        \item \only<1-2>{Avoids unnecessary recompilation}%
+              \only<3>{{\color{mygreen}Avoids unnecessary recompilation}} after a rebase
       \end{itemize}
 
     \item ...and a few other minor improvements
