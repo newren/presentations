@@ -971,78 +971,160 @@ void detect_renames_and_copies(...)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}[fragile]
+\begin{frame}
   \frametitle{Partial capitulation}
 
-  \vspace*{-0.25\baselineskip}
+  \vspace*{-\baselineskip}
   \only<2->{
-    If a rename is not detected:\\[0.25em]
-      {\footnotesize\texttt{%
-      \begin{tabular}{lll}
-               & buccaneer.c  & viking.c \\
-        Base:
-          &
-          \only<2-3|handout:0>{5eac0a57}%
-          \only<4- |handout:1-2>{{\color{myred}5eac0a57}}%
-          &
-          00000000  \\
-        Side1:
-          &
-          \only<2-3|handout:0>{5caff01d}%
-          \only<4  |handout:1>{{\color{myred}5caff01d}}%
-          \only<5- |handout:2>{{\color{mygreen}5eac0a57}}
-          &
-          00000000  \\
-        Side2: & 00000000      &  0b57ac1e \\
-      \end{tabular}
-      }}
+  {\scriptsize
+  \begin{multicols}{2}
+    \begin{minipage}{0.48\textwidth}
+    \begin{block}{If a rename is not detected:}
+        {\texttt{%
+        \begin{tabular}{lll}
+                 & buccaneer.c  & viking.c \\
+          Base:
+            &
+            \only<2  |handout:0>{5eac0a57}%
+            \only<3- |handout:1-2>{{\color{myred}5eac0a57}}%
+            &
+            00000000  \\
+          Side1:
+            &
+            \only<2  |handout:0>{5caff01d}%
+            \only<3  |handout:1>{{\color{myred}5caff01d}}%
+            \only<4- |handout:2>{{\color{mygreen}5eac0a57}}
+            &
+            00000000  \\
+          Side2: & 00000000      &  c01055a1 \\
+        \end{tabular}
+        }}
 
-    \vspace*{0.5\baselineskip}
-    Then:
-      \begin{itemize}
-        \item buccaneer.c:
-              \only<2  |handout:0>{modify/delete conflict}%
-              \only<3-5|handout:1>{{\color{myred}modify/delete conflict}}%
-              \only<6- |handout:2>{{\color{mygreen}deleted as expected}}
-        \item viking.c: totally new file
-        \item
-              \only<2  |handout:0>{no textual merging}%
-              \only<3-6|handout:1>{\color{myred}no textual merging}%
-              \only<7- |handout:2>{no textual merging \color{mygreen}needed}
-      \end{itemize}
+        \vspace*{1em}
+        Then:
+        \begin{itemize}
+          \item buccaneer.c:
+                \only<2-4|handout:0>{modify/delete conflict}%
+                \only<5-8|handout:1>{{\color{myred}modify/delete conflict}}%
+                \only<9- |handout:2>{{\color{mygreen}deleted as expected}}
+          \item viking.c: totally new file
+          \item
+                \only<2-4|handout:0>{no textual merging}%
+                \only<5-9|handout:1>{\color{myred}no textual merging}%
+                \only<10-|handout:2>{no textual merging \color{mygreen}needed}
+        \end{itemize}
 
-    \vspace*{0.5\baselineskip}
-    As reported by git:\\[0.5em]
-      {\footnotesize\texttt{%
-        \quad{}\$ git status\\
-        \quad{}...\\
-        \only<2|handout:0>{
-          \quad{}Unmerged paths:\\
-          \qquad{}	deleted by them:   buccaneer.c\\
+        \vspace*{1em}
+        As reported by git status:\\[0.5em]
+        {\texttt{%
+          \only<2-4|handout:0>{
+            \quad{}Changes to be committed:\\
+            \quad{}\enskip{}      new file: viking.c\\
+            \quad{}Unmerged paths:\\
+            \quad{}\enskip{}	deleted by them: buccaneer.c\\
+          }%
+          \only<5-10|handout:1>{{\color{myred}
+            \quad{}Changes to be committed:\\
+            \quad{}\enskip{}      new file: viking.c\\
+            \quad{}Unmerged paths:\\
+            \quad{}\enskip{}	deleted by them: buccaneer.c\\
+          }}%
+          \only<11-|handout:2>{{\color{mygreen}
+            \quad{}Changes to be committed:\\
+            \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+            \vspace*{2\baselineskip}
+          }}
+        }}
+    \end{block}
+    \end{minipage}
+
+  \columnbreak
+
+    \begin{minipage}{0.48\textwidth}
+    \begin{block}{If we detect renames on each side of history:}
+        \texttt{%
+        \begin{tabular}{ll}
+                 & buccaneer.c $\Rightarrow$ viking.c \\
+          Base:
+            &
+            \only<2  |handout:0>{5eac0a57}%
+            \only<3- |handout:1-2>{{\color{myred}5eac0a57}} \\
+          Side1:
+            &
+            \only<2  |handout:0>{5caff01d}%
+            \only<3  |handout:1>{{\color{myred}5caff01d}}%
+            \only<4- |handout:2>{{\color{mygreen}5eac0a57}} \\
+          Side2: &  c01055a1 \\
+          Merged:
+            &
+            \only<2-4|handout:0>{0b57ac1e}%
+            \only<5-6|handout:1>{{\color{myred}????????}}%
+            \only<7- |handout:2>{{\color{mygreen}c01055a1}}
+        \end{tabular}
         }
-        \only<3-5|handout:1>{{\color{myred}
-          \quad{}Unmerged paths:\\
-          \qquad{}	deleted by them:   buccaneer.c\\
-        }}
-        \only<6-|handout:2>{{\color{mygreen}
-          \qquad\textit{(Clean)}\phantom{g}
-          \vspace*{0.75\baselineskip}
-        }}
-      }}
-  }
 
-  \only<3-7|handout:1>{
-    \vspace*{0.5\baselineskip}
-    {\color{myred}When can we get away with this?}
-  }
+        \vspace*{1em}
+        Then:
+        \begin{itemize}
+          \item buccaneer.c: removed
+          \item viking.c:
+                  \only<1-4>{contains merged content}%
+                  \only<5>{{\color{myred}contains merged content}}%
+                  \only<6->{{\color{mygreen}no content merge was needed}}
+        \end{itemize}
 
-  \only<8|handout:2>{
-    %\vspace*{0.5\baselineskip}
-    {\color{mygreen}
-      Exclude potential source from rename detection \textbf{if} it is
-      unmodified by \textit{other} side of history.
-    }
+        \vspace*{1em}
+        As reported by git status:\\[0.5em]
+        \only<2-4|handout:0>{
+          EITHER\\
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+          }}
+          OR\\
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	deleted: buccaneer.c \\
+            \quad{}Unmerged paths:\\
+            \quad{}\,\,	both modified:   viking.c\\
+          }}
+        }
+        \only<5-7|handout:1>{{\color{myred}
+          EITHER\\
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+          }}
+          OR\\
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	deleted: buccaneer.c \\
+            \quad{}Unmerged paths:\\
+            \quad{}\,\,	both modified:   viking.c\\
+          }}
+        }}
+        \only<8-|handout:2>{{\color{mygreen}
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+          }}
+          \vspace*{6\baselineskip}
+        }}
+
+    \end{block}
+    \end{minipage}
+  \end{multicols}
+
+  \only<12>{
+    \vspace*{-3\baselineskip}
+    \begin{minipage}{0.48\textwidth}
+    \begin{center}
+      Same results whether or not rename is detected by merge machinery.
+    \end{center}
+    \end{minipage}
   }
+  }} % end of \scriptsize
+
 
 \end{frame}
 
