@@ -860,6 +860,24 @@ static struct commit* merge_recursive_internal(side1, side2)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection[Bypassing]{Exact renames}
+
+\begin{frame}
+  \frametitle{}
+
+  \vfill
+  {\Large
+  \begin{center}
+    Optimization 1: Don't redo work\\
+    \vspace*{\baselineskip}
+    \pause
+    Don't look for a better than perfect match.
+  \end{center}
+  }
+  \vfill
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}[fragile]
   \frametitle{Exact renames}
 
@@ -906,6 +924,24 @@ void detect_renames_and_copies(...)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection[Capitulating]{Partial capitulation}
+\begin{frame}
+  \frametitle{}
+
+  \vfill
+  {\Large
+  \begin{center}
+    Optimization 2: Don't do unnecessary work\\
+    \vspace*{\baselineskip}
+    \pause
+    If you can get the same answer without an expensive computation,
+    skip the expensive computation.
+  \end{center}
+  }
+  \vfill
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}[fragile]
   \frametitle{Partial capitulation}
 
@@ -1084,6 +1120,24 @@ void detect_renames_and_copies(...)
 
 \subsection[Linearizing]{Dimensionality Reduction}
 \begin{frame}
+  \frametitle{}
+
+  \vfill
+  {\Large
+  \begin{center}
+    Optimization 3: Fudge ``unnecessary''\\
+    \vspace*{\baselineskip}
+    \pause
+    Only do part of the work and accept slightly different results if
+    there are huge cost savings.
+  \end{center}
+  }
+  \vfill
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
   \frametitle{Dimensionality Reduction}
 
   Basic rename detection rules:
@@ -1250,6 +1304,23 @@ void detect_renames_and_copies(...)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection[Remembering]{Remembering previous work}
+\begin{frame}
+  \frametitle{}
+
+  \vfill
+  {\Large
+  \begin{center}
+    Optimization 4: Don't redo unnecessary work\\
+    \vspace*{\baselineskip}
+    \pause
+    When repeatedly merging, re-use\\ previous rename detection results.
+  \end{center}
+  }
+  \vfill
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}
   \frametitle{Remembering previous work}
 
