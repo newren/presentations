@@ -1251,20 +1251,20 @@ void detect_renames_and_copies(...)
 \begin{frame}
   \frametitle{Dimensionality Reduction}
 
-  Basic rename detection rules:
-  \only<2->{
-  \begin{itemize}
-    \item If the same path exists in base and a side, those paths are
-          always assumed to be different versions of the same file.  (No
-          break detection is done.)
-    \only<3->{
-    \item If a path exists in base but not the side or vice versa, must
-          exhaustively look through all pairings for best match.
-    }
-  \end{itemize}
-  }
+  %Basic rename detection rules:
+  %\only<2->{
+  %\begin{itemize}
+  %  \item If the same path exists in base and a side, those paths are
+  %        always assumed to be different versions of the same file.  (No
+  %        break detection is done.)
+  %  \only<3->{
+  %  \item If a path exists in base but not the side or vice versa, must
+  %        exhaustively look through all pairings for best match.
+  %  }
+  %\end{itemize}
+  %}
 
-  \only<4->{
+  %\only<4->{
     %\vspace*{-1.0\baselineskip}
     \vfill
     \begin{center}
@@ -1276,7 +1276,7 @@ void detect_renames_and_copies(...)
     \end{minipage}
     \end{center}
     \vfill
-  }
+  %}
 
 \end{frame}
 
@@ -1380,35 +1380,45 @@ void detect_renames_and_copies(...)
 \begin{frame}
   \frametitle{Dimensionality Reduction}
 
-  Basic rename detection rules:
-  \begin{itemize}
-    \item If the same path exists in base and a side, those paths are
-          always assumed to be different versions of the same file.  (No
-          break detection is done.)
-    \only<2->{{\color{mygreen}
-    \item If unique basename matches are found, compare the contents.
-          If their similarity exceeds the rename threshold treat them
-          as a rename without looking for a ``better''
-          match.  Otherwise...
-    }}
-    \item If a path exists in base but not the side or vice versa, must
-          exhaustively look through all pairings for best match.
-  \end{itemize}
+  %Basic rename detection rules:
+  %\begin{itemize}
+  %  \item If the same path exists in base and a side, those paths are
+  %        always assumed to be different versions of the same file.  (No
+  %        break detection is done.)
+  %  \only<2->{{\color{mygreen}
+  %  \item If unique basename matches are found, compare the contents.
+  %        If their similarity exceeds the rename threshold treat them
+  %        as a rename without looking for a ``better''
+  %        match.  Otherwise...
+  %  }}
+  %  \item If a path exists in base but not the side or vice versa, must
+  %        exhaustively look through all pairings for best match.
+  %\end{itemize}
 
-  \only<3->{
-    \vfill
+  %\only<3->{
+
+    \vspace*{3\baselineskip}
     \begin{center}
     \begin{minipage}{0.5\textwidth}
-    \begin{block}{\begin{center}\only<3-5|handout:0>{Improvement}\only<6>{If enough matching basenames...}\end{center}}
+    \begin{block}{\begin{center}Improvement\end{center}}
         \quad
-        O($M*N$) $\to$
-          \only<4-5|handout:0>{O((M-B)*(N-B) \only<4>{\phantom{+ B}}\only<5>{+ B})}
-          \only<6>{O(minimum($M,N$))}
+        O($M*N$) $\to$ O((M-B)*(N-B) \only<1>{\phantom{+ B}}\only<2->{+ B})
     \end{block}
     \end{minipage}
     \end{center}
-    \vfill
-  }
+
+    \only<3>{
+    \vspace*{1\baselineskip}
+    \begin{center}
+    \begin{minipage}{0.5\textwidth}
+    \begin{block}{\begin{center}If enough matching basenames...\end{center}}
+        \quad
+        O($M*N$) $\to$ O(minimum($M,N$))
+    \end{block}
+    \end{minipage}
+    \end{center}
+    }
+  %}
 
 \end{frame}
 
