@@ -14,6 +14,10 @@ Next pieces
        pause, next slide) about Git Merge, and in particular I'll be
        focusing on quadratic behavior found within it.
 
+  * "It turns out that taking a slow piece of the code and replacing a
+     slow algorithm with a faster one is not as effective an
+     optimization as just not doing the work at all."
+
   * "Sadly, I need to apologize -- this is not one of those talks;
      instead I'll be using some different performance strategies"
 
