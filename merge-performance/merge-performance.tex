@@ -878,6 +878,12 @@ static struct commit* merge_recursive_internal(side1, side2)
     \end{tabular}
     }
   \end{center}
+  \uncover<5| handout:1>{
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[draw,ellipse,rotate=15,color=mygreen] at (7.2, 1.5)
+           {Matrix of similarity percentages};
+    \end{tikzpicture}
+  }
 
 \end{frame}
 
@@ -1401,6 +1407,18 @@ void detect_renames_and_copies(...)
     \end{tabular}
     }
   \end{center}
+  \only<4| handout:1>{
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[draw,ellipse,rotate=10,color=cyan] at (7.7, 1.6)
+           {Matrix of similarity percentages};
+    \end{tikzpicture}
+  }
+  \only<5| handout:1>{
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[draw,ellipse,rotate=10,color=cyan] at (7.7, 1.7)
+           {Sparse similarity percentages};
+    \end{tikzpicture}
+  }
 
 \end{frame}
 
