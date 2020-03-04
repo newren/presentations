@@ -1725,6 +1725,28 @@ void detect_renames_and_copies(...)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
+  \frametitle{Testcase}
+
+  \begin{itemize}[<+->]
+     \item Linux kernel
+
+     \item Rebase or cherry-pick hwmon-updates (35 patches) from 5.5 $\to$ 5.4
+
+     \item Very few renames involved; only takes 50\% of execution time
+
+     \item Speedup factor of 3 (optimized more things than renames)
+
+     \item What if we checkout 5.4, and rename \texttt{drivers/}
+           $\Rightarrow$ \texttt{pilots/}, and then rebase or cherry-pick
+           those 35 patches on top ?
+
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
   \frametitle{Results}
 
   %Linux kernel, backport hwmon-updates from 5.5 to 5.4-ish.
