@@ -149,24 +149,28 @@
   \frametitle{Advantage: Performance}
 
   Performance:\\
+  \vspace*{0.5\baselineskip}
   \only<1>{
   \qquad
-  \begin{tabular}{lrrr}
-                  & \multicolumn{1}{c}{old} & \multicolumn{1}{c}{new} \\
-    few-renames:  &   18.934 s & .1892 s \\
-    mega-renames: & 6424.660 s & .6573 s \\
-    just-one:     &  173.093 s & .2612 s
+  \begin{tabular}{l|r|c}
+    Testcase       & \multicolumn{1}{c|}{Old timing}
+                   & \multicolumn{1}{p{4.93em}}{New timing \phantom{foobar}} \\
+    \hline
+    few-renames:   &   18.934 s & .1892 s \\
+    mega-renames:  & 6424.660 s & .6573 s \\
+    just-one-mega: &  173.093 s & .2612 s
   \end{tabular}
   }
   \only<2->{
   \qquad
-  \begin{tabular}{lrrr}
-                  & \multicolumn{1}{c}{old}
-                  & \multicolumn{1}{c}{new}
-                  & Speed-up \\
-    few-renames:  &   18.934 s & .1892 s &  100.1 \\
-    mega-renames: & 6424.660 s & .6573 s & 9774.3 \\
-    just-one:     &  173.093 s & .2612 s &  662.7
+  \begin{tabular}{l|r|c|r}
+    Testcase       & \multicolumn{1}{c|}{Old timing}
+                   & \multicolumn{1}{c|}{New timing}
+                   & \multicolumn{1}{p{4.4em}}{\centering Speed-up factor} \\
+    \hline
+    few-renames:   &   18.934 s & .1892 s &  100.1 \hspace*{0.3em} \\
+    mega-renames:  & 6424.660 s & .6573 s & 9774.3 \hspace*{0.3em} \\
+    just-one-mega: &  173.093 s & .2612 s &  662.7 \hspace*{0.3em}
   \end{tabular}
   }%
   \only<3->{
@@ -181,8 +185,8 @@
 \begin{frame}
   \frametitle{Advantage: New {-}{-}remerge-diff feature}
 
-  Sometimes you want to investigate a user's conflict resolution they
-  performed for a merge, including whether they made unrelated changes:\\
+  Sometimes you want to investigate the conflict resolution performed
+  for a merge, including whether unrelated changes were included:\\
   \vspace*{\baselineskip}
   \qquad\cl{git show {-}{-}remerge-diff ...}\\
   or\\
@@ -195,9 +199,8 @@
 \begin{frame}[fragile]
   \frametitle{Advantage: New AUTO\_MERGE feature}
 
-  Sometimes you want to investigate what conflict resolution you have
-  done so far for a merge, including whether you made any unrelated
-  changes:\\
+  Sometimes you want to investigate the conflict resolution you have
+  done so far for a merge, including any unrelated changes:\\
   \vspace*{\baselineskip}
   \qquad\cl{git diff AUTO\_MERGE}
 
@@ -378,7 +381,7 @@
   \end{itemize}
 
   \only<2->{
-  \vspace*{0.2\baselineskip}
+  \vspace*{\baselineskip}
   This poses a problem:
   \begin{itemize}
     \item There is no hint that users should merge these files
@@ -387,17 +390,17 @@
   }
 
   \only<3->{
-  \vspace*{0.2\baselineskip}
+  \vspace*{\baselineskip}
   In my experience, users often handle this via one of:
   \begin{itemize}[<+(2)->]
-    \item Just keeping both files (each of which is missing changes made
-          on the other side of history)
-    \item Just picking one of the two files (unknowingly discarding
-          changes made on the other side of history)
+    \item Just keeping both files (oops) %(each of which is missing changes made
+          %on the other side of history)
+    \item Just picking one of the two files (oops) %(unknowingly discarding
+          %changes made on the other side of history)
     \item If users \textit{do} notice there was a rename, they
           manually hand apply the subset of changes they remember from
-          one file to the other (unknowingly discarding the
-          remaining subset of changes)
+          one file to the other (oops) %(unknowingly discarding the
+          %remaining subset of changes)
   \end{itemize}
   }
 
@@ -483,7 +486,18 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Discovering Optimizations}
-\subsection{Relevance}
+\subsection[Relevance]{Relevant Renames}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \vfill
+  \vspace*{2\baselineskip}
+  {\Huge
+  \begin{center}Relevant renames\end{center}
+  }
+  \vfill
+\end{frame}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
@@ -571,6 +585,7 @@
 
   \vspace*{2\baselineskip}
   \pause
+  {\scriptsize
   Notes:
   \begin{itemize}
     \item \texttt{git am -3} effectively embeds the naive form of this
@@ -579,19 +594,36 @@
           (which is incompatible with directory rename detection)
           \pause
     \item If there are multiple valid rename pairings, excluding some source
-          files can cause the others to be paired differently.  (In
-          particular, it causes them to pair the way that they would be
-          under \texttt{git am -3}.)\\
+          files can cause other source files to be paired differently.  (In
+          particular, it causes them to pair the same way as
+          \texttt{git am -3} pairs them.)\\
           \pause
           \vspace*{\baselineskip}
+          \only<6>{
           $\Rightarrow$ one inconsistency between rebase backends has been
           removed
+          }\only<7>{
+          $\Rightarrow$ \textcolor{mygreen}{one inconsistency between rebase
+          backends has been removed
+          }}
   \end{itemize}
+  }
 
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{No Copy}
+\subsection[No Copy]{No copy detection}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \vfill
+  \vspace*{2\baselineskip}
+  {\Huge
+  \begin{center}No copy detection\end{center}
+  }
+  \vfill
+\end{frame}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}[fragile]
@@ -648,7 +680,18 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Caching}
+\subsection[Caching]{Caching renames}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \vfill
+  \vspace*{2\baselineskip}
+  {\Huge
+  \begin{center}Caching renames\end{center}
+  }
+  \vfill
+\end{frame}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
@@ -696,10 +739,34 @@
     Slow-down factor if only this optimization excluded: & 1.7
   \end{tabular}
 
+  \pause
+  \vspace*{2\baselineskip}
+  {\scriptsize
+  Notes:
+  \begin{itemize}[<+(1)->]
+    \item Simple idea, very complex to show it is safe;
+          see \texttt{Documentation/technical/remembering-renames.txt} in
+          the Git source.
+    \item A more comprehensive cache or on disk record of renames would be
+          either unsafe or actually slow things down.
+  \end{itemize}
+  }
+
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Basenames}
+\subsection[Basenames]{Basename-guided rename detection}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \vfill
+  \vspace*{2\baselineskip}
+  {\Huge
+  \begin{center}Basename-guided rename detection\end{center}
+  }
+  \vfill
+\end{frame}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
@@ -770,7 +837,18 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Directories}
+\subsection[Directories]{Trivial directory resolution}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \vfill
+  \vspace*{2\baselineskip}
+  {\Huge
+  \begin{center}Trivial directory resolution\end{center}
+  }
+  \vfill
+\end{frame}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
@@ -780,7 +858,7 @@
   Three-way merge can thus be explained as starting at the toplevel
   tree and:
   
-  \begin{enumerate}
+  \begin{enumerate}[<+(1)->]
     \item Recurse into each subtree (for each of the three commits)
     \item Get files from subtree
     \item Match up the files 
@@ -854,13 +932,13 @@
   \vspace*{0.5\baselineskip}
   \qquad
   \begin{tabular}{l|r|c|r}
-    Testcase      & \multicolumn{1}{c|}{Old timing}
-                  & \multicolumn{1}{c|}{New timing}
-                  & \multicolumn{1}{p{4.4em}}{\centering Speed-up factor} \\
+    Testcase       & \multicolumn{1}{c|}{Old timing}
+                   & \multicolumn{1}{c|}{New timing}
+                   & \multicolumn{1}{p{4.4em}}{\centering Speed-up factor} \\
     \hline
-    few-renames:  &   18.934 s & .1892 s &  100.1 \hspace*{0.3em} \\
-    mega-renames: & 6424.660 s & .6573 s & 9774.3 \hspace*{0.3em} \\
-    just-one:     &  173.093 s & .2612 s &  662.7 \hspace*{0.3em}
+    few-renames:   &   18.934 s & .1892 s &  100.1 \hspace*{0.3em} \\
+    mega-renames:  & 6424.660 s & .6573 s & 9774.3 \hspace*{0.3em} \\
+    just-one-mega: &  173.093 s & .2612 s &  662.7 \hspace*{0.3em}
   \end{tabular}
 
 \end{frame}
@@ -885,6 +963,18 @@
   \href{https://blog.palantir.com/optimizing-gits-merge-machinery-6-7bf887a131d8}{\textcolor{blue}{part VI}}.
   \end{center}
 
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{}
+\begin{frame}
+  \vfill
+  \vspace*{2\baselineskip}
+  {\Huge
+  \begin{center}Thanks\end{center}
+  }
+  \vfill
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
