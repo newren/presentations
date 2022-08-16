@@ -1,0 +1,892 @@
+\ifx\handout\undefined
+  \documentclass[compress,t]{beamer}
+\else
+  \documentclass[compress,handout,t]{beamer}
+  \usepackage{pgfpages}
+  %\pgfpagesuselayout{8 on 1}[letterpaper,border shrink=1mm]
+  \pgfpagesuselayout{8 on 1}[letterpaper,border shrink=0mm]
+\fi
+
+\input{preamble}
+\usepackage{multicol}
+\usepackage{ulem} % used in definition of \redout
+
+\usepackage{tikz}
+\usetikzlibrary{arrows,snakes,backgrounds,shapes}
+\tikzstyle{commit}=[circle,draw=blue!50,fill=blue!20]
+\tikzstyle{redCommit}=[circle,draw=MyRed!50,fill=MyRed!20]
+\tikzstyle{redConflict}=[circle,draw=MyRed!50,dashed,fill=MyRed!20]
+\tikzstyle{orphanCommit}=[black!50,circle,draw=blue!20,fill=blue!10]
+\tikzstyle{droppedCommit}=[black!60,circle,draw=MyRed!50,fill=MyRed!20,double]
+\tikzstyle{ref}=[rectangle,draw=black!50,fill=black!20]
+\tikzstyle{specialRef}=[black!50,rectangle,draw=black!50,fill=black!10]
+\tikzstyle{msg}=[tape,tape bend top=none,draw=MyRed!50,fill=MyRed!20]
+\tikzstyle{prnt}=[thick,-stealth']
+\tikzstyle{oprnt}=[black!50,dotted,-stealth',draw=black!50]
+\tikzstyle{bptrnext}=[black!80,dashed,-stealth',draw=black!80]
+\tikzstyle{bptr}=[thick,-latex']
+\tikzstyle{nextmsg}=[thick,-open triangle 45]
+\newcommand{\parent}[1]{\char94{#1}}
+\newcommand{\ancestor}[1]{\char126{#1}}
+\colorlet{myred}{red!90!black} % slightly darker than normal red
+\colorlet{myblue}{cyan}        % plain cyan works; might consdier darkening
+\colorlet{mygreen}{green!70!black} % slightly darker than normal green
+\colorlet{mypurple}{red!45!blue}
+\definecolor{mybrown}{rgb}{0.45,0.28,0.13}
+\newcommand\redout{\bgroup\markoverwith
+    {\textcolor{myred}{\rule[.5ex]{2pt}{0.8pt}}}\ULon
+}
+
+%\title{(Git Merge)$²$}
+\title{(Git Merge)$^2$}
+
+\author{Elijah Newren}
+\institute{Palantir Technologies}
+
+%\date{September 14, 2022}
+%\date{Palantir Technologies}
+\date{}
+
+%\includeonlyframes{wip}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{New Merge Backend}
+\subsection{Scope}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Scope}
+
+  The merge machinery powers several aspects of git:
+
+  \begin{itemize}
+    \item merge
+    \item cherry-pick
+    \item revert
+    \item rebase
+    \item stash
+    \item switch -m, checkout -m
+    \item am -3
+  \end{itemize}
+
+
+\end{frame}
+
+\begin{comment}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{New strategy}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{New strategy or algorithm}
+
+  \only<1>{
+  Git has the concept of pluggable strategies or algorithms; built-in ones
+  include:
+  \begin{itemize}
+    \item recursive (prior default)
+    \item resolve
+    \item octopus
+    \item subtree
+    \item ours
+  \end{itemize}
+  }
+
+  \only<2->{
+  These can be selected at run-time:\\
+  \quad\cl{git merge -s <strategy> $\ldots$}
+  }
+
+  \only<3->{
+  \vspace*{0.5\baselineskip}
+  For example:\\
+  \quad\cl{git merge -s recursive $\ldots$}
+  }
+
+  \only<4->{
+  \vspace*{2\baselineskip}
+
+  I wrote a replacement for the default strategy, recursive.  Since
+  the parser didn't require a space:\\
+  \quad\cl{git merge -s<strategy> $\ldots$}
+  }
+
+  \only<5->{
+  \vspace*{2\baselineskip}
+  I called the new strategy ``\texttt{ort}'':\\
+  \quad\cl{git merge -sort $\ldots$}
+  }
+
+\end{frame}
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Advantages}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantage: Correctness}
+
+  Correctness:
+  \begin{itemize}
+    \item 34 tests that succeed with the new backend, but fail with the old one
+    \item \hspace*{0.5em}0 tests that fail with the new backend, but succeed with the old one
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantage: Performance}
+
+  Performance:\\
+  \only<1>{
+  \qquad
+  \begin{tabular}{lrrr}
+                  & \multicolumn{1}{c}{old} & \multicolumn{1}{c}{new} \\
+    few-renames:  &   18.934 s & .1892 s \\
+    mega-renames: & 6424.660 s & .6573 s \\
+    just-one:     &  173.093 s & .2612 s
+  \end{tabular}
+  }
+  \only<2->{
+  \qquad
+  \begin{tabular}{lrrr}
+                  & \multicolumn{1}{c}{old}
+                  & \multicolumn{1}{c}{new}
+                  & Speed-up \\
+    few-renames:  &   18.934 s & .1892 s &  100.1 \\
+    mega-renames: & 6424.660 s & .6573 s & 9774.3 \\
+    just-one:     &  173.093 s & .2612 s &  662.7
+  \end{tabular}
+  }%
+  \only<3->{
+  \vspace*{\baselineskip}
+  \begin{center}Geometric mean speedup: 865.4\end{center}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantage: New {-}{-}remerge-diff feature}
+
+  Sometimes you want to investigate a user's conflict resolution they
+  performed for a merge, including whether they made unrelated changes:\\
+  \vspace*{\baselineskip}
+  \qquad\cl{git show {-}{-}remerge-diff ...}\\
+  or\\
+  \qquad\cl{git log {-}{-}remerge-diff ...}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Advantage: New AUTO\_MERGE feature}
+
+  Sometimes you want to investigate what conflict resolution you have
+  done so far for a merge, including whether you made any unrelated
+  changes:\\
+  \vspace*{\baselineskip}
+  \qquad\cl{git diff AUTO\_MERGE}
+
+  \begin{comment}
+  ALTERNATE:
+
+  There are a variety of questions users might ask while resolving
+  conflicts:
+  \vspace*{-\baselineskip}
+  \begin{enumerate}
+    \item What changes have been made since the previous (first) parent?
+    \item What changes are staged?
+    \item What is still unstaged? (or what is still conflicted?)
+    \item What changes did I make to resolve conflicts so far?
+  \end{enumerate}
+
+  \vspace*{\baselineskip}
+  The first three of these have simple answers:
+  \begin{enumerate}
+    \item \texttt{git diff HEAD}
+    \item \texttt{git diff {-}{-}cached}
+    \item \texttt{git diff}
+  \end{enumerate}
+
+  Due to the new merge strategy, the fourth now has an answer too:
+  \begin{enumerate}[4]
+    \item \texttt{git diff AUTO\_MERGE}
+  \end{enumerate}
+  \end{comment}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantages: working with repository subsets}
+
+  The new merge backend is vital to the efforts for working with
+  repository subsets in Git.
+  \begin{itemize}
+    \item sparse-checkout: avoid needless vivifying
+    \item sparse-index: ability to work without full index
+    \item partial clone: massive reduction in blobs needed
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantages: More features in the pipeline}
+
+  \begin{itemize}
+    \item Server side operations
+    \item Merge/Rebase/Cherry-pick/Revert on branches other than HEAD
+    \item Replaying commits with less worktree dirtying
+    \item Replaying a thicket of branches, rather than just one
+    \item Replaying merge commits and their ``hidden'' changes
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Background}
+\subsection{3-way Merge}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Three-way content merge}
+
+  \begin{center}
+  \vfill
+  \begin{minipage}{0.6\textwidth}
+  \begin{center}
+  Basic idea behind merge:\\
+  Do three-way content merge on each file.
+  \end{center}
+  \end{minipage}
+
+  \vfill
+  \pause
+  \begin{minipage}{0.6\textwidth}
+  \begin{center}
+  Purpose of three-way content merge:\\
+  Reconcile differences when both sides
+  of history made changes.
+  \end{center}
+  \end{minipage}
+
+  \vfill
+  \end{center}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Three-way content merge}
+
+  \vspace*{-\baselineskip}
+  \begin{multicols}{2}
+    File from branch Side1:\\
+    {\footnotesize\texttt{%
+    %\vspace*{-0.125\baselineskip}%
+    \quad{}...                             \\
+    \quad{}speak\_like\_a\_pirate(arrrgs); \\
+    \quad{}\only<3->{\color{myred}}explore\_sea(aye, matey);\only<3->{\color{black}}\\
+    \quad{}shiver(me.timbers);             \\
+    %\vspace*{-0.25\baselineskip}%
+    \quad{}...                             \\
+    }}
+    \columnbreak
+    \pause
+    Same file from branch Side2:\\
+    {\footnotesize\texttt{%
+    %\vspace*{-0.125\baselineskip}%
+    \quad{}...                             \\
+    \quad{}speak\_like\_a\_pirate(arrrgs); \\
+    \quad{}\only<3->{\color{myred}}explore\_sea(me.love[0]);\only<3->{\color{black}}\\
+    \quad{}shiver(me.timbers);             \\
+    %\vspace*{-0.5\baselineskip}%
+    \quad{}...
+    }}
+  \end{multicols}%
+
+  \only<4->{
+    \vspace{-0.5\baselineskip}
+    Correct merge depends on the version in the merge base:\\
+    {\footnotesize\texttt{%
+      \quad{}speak\_like\_a\_pirate(arrrgs);\\
+      \quad{}%
+      \only<4|handout:0>{{\color{myblue}?????}}%
+      \only<5|handout:0>{{\color{myblue}explore\_sea(aye, matey);}}%
+      \only<6|handout:0>{{\color{myblue}explore\_sea(me.love[0]);}}%
+      \only<7->{{\color{myblue}explore\_sea(plus, plus);}}%
+      \\
+      \quad{}shiver(me.timbers);\\
+    }}
+  }
+
+  %\only<6-10|handout:1>{
+  \only<5-|handout:1>{
+  \begin{center}
+  \begin{minipage}{0.5\textwidth}
+  Which results in the following merge:\\
+  {\footnotesize\texttt{%
+    \quad{}speak\_like\_a\_pirate(arrrgs);\\
+    \quad{}%
+    \only<5|handout:0>{{\color{mygreen}explore\_sea(me.love[0]);}}%
+    \only<6|handout:0>{{\color{mygreen}explore\_sea(aye, matey);}}%
+    \only<7>{{\color{mygreen}
+    <{}<{}<{}<{}<{}<{}< HEAD  \\
+    \quad{}explore\_sea(aye, matey); \\
+    \quad{}=======\\
+    \quad{}explore\_sea(me.love[0]); \\
+    \quad{}>{}>{}>{}>{}>{}>{}> branchB
+    }}
+    \\
+    \quad{}shiver(me.timbers);\\
+  }}
+  \end{minipage}
+  \end{center}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Rename Basics}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Why renames are important}
+
+  If a rename from file A $\to$ file B is not detected:
+  \begin{itemize}
+    \item A is marked as modified on one side, deleted on the other (conflict!)
+    \item B is marked as a new file
+  \end{itemize}
+
+  \only<2->{
+  \vspace*{0.2\baselineskip}
+  This poses a problem:
+  \begin{itemize}
+    \item There is no hint that users should merge these files
+    \item It's non-obvious how to properly merge these files
+  \end{itemize}
+  }
+
+  \only<3->{
+  \vspace*{0.2\baselineskip}
+  In my experience, users often handle this via one of:
+  \begin{itemize}[<+(2)->]
+    \item Just keeping both files (each of which is missing changes made
+          on the other side of history)
+    \item Just picking one of the two files (unknowingly discarding
+          changes made on the other side of history)
+    \item If users \textit{do} notice there was a rename, they
+          manually hand apply the subset of changes they remember from
+          one file to the other (unknowingly discarding the
+          remaining subset of changes)
+  \end{itemize}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{How rename detection works}
+
+  How does git detect renames?  For each side...\\[0.25em]
+  \pause
+  \vspace*{-0.5\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l}
+      Files in Base  &  Files in given side \\
+      \hline
+      README.md      &  README.md   \\
+      archery.js     &  corrupt.js  \\
+      baseball.js    &  divine.js   \\
+      build.log      &  dull.js     \\
+      football.js    &  grand.js    \\
+      golf.js        &  lame.js     \\
+      running.js     &
+    \end{tabular}
+    }
+  \end{center}
+  \vspace*{-0.5\baselineskip}
+
+  \pause
+  \vspace*{\baselineskip}
+  For each deleted/added pair, what percentage of lines are found in both?
+  \pause
+  \vspace*{-0.25\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l|l|l|l|l}
+                   & corrupt.js & divine.js & dull.js & grand.js & lame.js \\
+      \hline
+      archery.js   &&&&& \\
+      baseball.js  &&&&& \\
+      build.log    &&&&& \\
+      football.js  &&&&& \\
+      golf.js      &&&&& \\
+      running.js   &&&&&
+    \end{tabular}
+    }
+  \end{center}
+  \uncover<5| handout:1>{
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[draw,ellipse,rotate=15,color=mygreen] at (7.2, 1.5)
+           {Matrix of similarity percentages};
+    \end{tikzpicture}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{The Journey Begins}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{How it all began}
+
+  In a repository with tens of thousands of renames (due to dozens of
+  high-ish level directory renames):
+
+  \begin{itemize}[<+(1)->]
+    \item cherry-pick would fail to detect renames and fail to notify
+          about needed merge.renameLimit
+    \item cherry-pick would ignore merge.renameLimit > 32767
+    \item if directory renames involved, files would be left in wrong
+          directory
+    \item \only<1-6>{people wrote custom scripts to cherry-pick commits}
+          \only<7->{\textcolor{red}{people wrote custom scripts to
+                    cherry-pick commits}}
+    \item after fixing merge.renameLimit, cherry-picking small patches
+          would take more than 9 minutes.
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discovering Optimizations}
+\subsection{Relevance}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Those custom ``cherry-pick'' scripts}
+
+  Users wrote scripts that would:
+
+  \begin{itemize}[<+(1)->]
+    \item do a \texttt{git format-patch -1 \textit{\$COMMIT}}
+    \item modify the file names according to a set of patterns
+    \item run \texttt{git apply}
+  \end{itemize}
+
+  \only<5->{
+  \vspace*{\baselineskip}
+  The result?
+  \only<6->{
+  Successful cherry-pick in a matter of \textit{seconds}\only<6->{, usually}.
+  }}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Those custom ``cherry-pick'' scripts}
+
+  Maddening question: Why can these scripts ignore tens of thousands
+  of renames, and only pay attention to renames for the five files
+  modified in the commit being ``cherry-picked''...\only<2->{and still usually
+  get the right answer?}
+
+  \only<3->{
+  \begin{center}
+  \vspace*{0.5\baselineskip}
+  \begin{minipage}{0.6\textwidth}
+  \begin{center}
+  Purpose of rename detection in merges:
+  \end{center}
+  \vspace*{-0.5\baselineskip}
+  \only<4->{
+  Allow us to match up files, for three-way content merging\only<4-6>{.}%
+  \only<4-6>{\vspace*{2\baselineskip}}
+  \only<7->{\textcolor{red}{AND used to detect directory renames so we can
+  move new files added to old directories to the new directory.}}
+  }
+  \end{minipage}
+
+  \only<5->{
+  \vspace*{1\baselineskip}
+  \begin{minipage}{0.6\textwidth}
+  \begin{center}
+  If only one side modified the file, we don't need three-way content merges.
+  \end{center}
+  \end{minipage}
+  }
+
+  \only<6->{
+  \vspace*{1\baselineskip}
+  \begin{minipage}{0.6\textwidth}
+  \begin{center}
+  $\Rightarrow$ We can exclude \textit{most} source files from rename detection.
+  \end{center}
+  \end{minipage}
+  }
+
+  \end{center}
+  }
+  
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Relevant renames optimization}
+
+  Only include \textit{relevant} source files in rename detection.
+
+  \pause
+  \vspace*{\baselineskip}
+  \begin{tabular}{lr}
+    Speed-up factor if only this optimization included:  & 75.8 \\
+    Slow-down factor if only this optimization excluded: & 4.9
+  \end{tabular}
+
+  \vspace*{2\baselineskip}
+  \pause
+  Notes:
+  \begin{itemize}
+    \item \texttt{git am -3} effectively embeds the naive form of this
+          optimization due to its build\_fake\_ancestor() function
+          \pause
+          (which is incompatible with directory rename detection)
+          \pause
+    \item If there are multiple valid rename pairings, excluding some source
+          files can cause the others to be paired differently.  (In
+          particular, it causes them to pair the way that they would be
+          under \texttt{git am -3}.)\\
+          \pause
+          \vspace*{\baselineskip}
+          $\Rightarrow$ one inconsistency between rebase backends has been
+          removed
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{No Copy}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Source code gems}
+
+  Git stores hashes of individual files and trees (and commits), so:
+  \begin{itemize}
+    \item If two files have the same hash, treat them as an exact rename.
+  \end{itemize}
+
+  \pause
+  \vspace*{1.0\baselineskip}
+  The implementation didn't quite match...\\
+  \vspace*{0.5\baselineskip}
+  \qquad
+  \begin{minipage}{0.8\textwidth}
+  {\footnotesize
+  \begin{verbatim}
+	rename_count = find_exact_renames(options);
+
+	/*
+	 * Calculate how many renames are left (but all the source
+	 * files still remain as options for copies!)
+	 */
+	num_create = (rename_dst_nr - rename_count);
+  \end{verbatim}
+  }
+  \end{minipage}
+
+  \pause
+  \vspace*{1.0\baselineskip}
+  Merging has no use for copy detection and turns it off.
+  \pause
+  This code meant we wasted time looking for a \textit{better} match than
+  an identical copy.
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Correctly exploiting exact renames optimization}
+
+  Do not waste time looking for a \textit{better} match than an
+  identical copy.
+
+  \pause
+  \vspace*{\baselineskip}
+  \begin{tabular}{lr}
+    Speed-up factor if only this optimization included:  & 2.83 \\
+    Slow-down factor if only this optimization excluded: & 1.02
+  \end{tabular}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Caching}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Noticing patterns}
+
+  When rebasing a long sequence of commits, before implementing other
+  optimizations I noticed a pattern in the output:
+  
+  \vspace*{1.0\baselineskip}
+  \qquad
+  \begin{minipage}{0.8\textwidth}
+    {\scriptsize
+    Performing inexact rename detection: 100\% (32116945/32116945), done.\\
+    Performing inexact rename detection: 100\% (32116945/32116945), done.\\
+    Performing inexact rename detection: 100\% (32116945/32116945), done.\\
+    Performing inexact rename detection: 100\% (32116945/32116945), done.\\
+    \hspace*{0.4\textwidth}\vdots\\
+    Performing inexact rename detection: 100\% (32116945/32116945), done.
+    }
+  \end{minipage}
+
+  \pause
+  \vspace*{1.0\baselineskip}
+  Exact same numbers each time?  It's detecting the same 26 thousand
+  renames, over and over!
+
+  \pause
+  \vspace*{1.0\baselineskip}
+  Why not just remember them after the first time?
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Caching renames during a rebase or cherry-pick}
+
+  Cache upstream renames during a rebase or cherry-pick, to reuse for
+  later commits in the same operation.
+
+  \pause
+  \vspace*{\baselineskip}
+  \begin{tabular}{lr}
+    Speed-up factor if only this optimization included:  & 5.5 \\
+    Slow-down factor if only this optimization excluded: & 1.7
+  \end{tabular}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Basenames}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Rename comparison matrix sizes}
+
+  Rename detection involves comparing N source files with M target files,
+  computing similarity percentages.  Matrix sizes:\\[1em]
+  \pause
+  \qquad
+  \begin{tabular}{lc}
+    At start:                     & 27328 x 26536 \\
+    After exact rename detection: &  6077 x  5285 \\
+    After relevance optimization: &   \hspace*{1.75em}1 x  5285
+  \end{tabular}
+
+  \pause
+  \vspace*{\baselineskip}
+  What is that one file?
+
+  \pause
+  \vspace*{\baselineskip}
+  I have to compare \texttt{\textit{olddir}/modified-filename.ext} to
+  5285 files to find out it's a rename
+  of \texttt{\textit{newdir}/modified-filename.ext}?
+
+  \pause
+  \vspace*{\baselineskip}
+  Can I somehow use the fact that there is only
+  one \texttt{modified-filename.ext} on each side of history?
+  
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Exploiting File Basenames}
+
+  Percentage of historical renames that moved a file into a different
+  directory without changing its name:
+  \pause
+  \begin{itemize}
+    \item linux: 76\%
+    \item gcc: 64\%
+    \item gecko: 79\%
+    \item webkit: 89\%
+  \end{itemize}
+
+  \pause
+  \vspace*{\baselineskip}
+  Idea: Check if files with same basename are similar, with higher
+  similarity threshold (controlled by \texttt{GIT\_BASENAME\_FACTOR}
+  environment variable).  If met, remove that pair from matrix.
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Basename-guided rename detection}
+
+  Use file basenames to guide rename detection.
+
+  \pause
+  \vspace*{\baselineskip}
+  \begin{tabular}{lr}
+    Speed-up factor if only this optimization included:  & 5.8 \\
+    Slow-down factor if only this optimization excluded: & 2.0
+  \end{tabular}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Directories}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Three-way merge, revisited}
+
+  Git tracks hashes of commits, each subtree, and each file.
+  Three-way merge can thus be explained as starting at the toplevel
+  tree and:
+  
+  \begin{enumerate}
+    \item Recurse into each subtree (for each of the three commits)
+    \item Get files from subtree
+    \item Match up the files 
+    \item Three-way merge matched files
+    \item Use resulting files to write new subtrees and toplevel tree
+  \end{enumerate}
+
+  \pause
+  \vspace*{\baselineskip}
+  What if one of the subtrees matches between the merge base and one of the
+  sides?
+
+  \pause
+  \vspace*{\baselineskip}
+  Can we avoid recursing into it?
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Trivial directory resolution}
+
+  Avoid recursing into subtrees where one side matches the merge base,
+  where possible.
+
+  \pause
+  \vspace*{\baselineskip}
+  \begin{tabular}{lr}
+    Speed-up factor if only this optimization included[*]:  & 4.6 \\
+    Slow-down factor if only this optimization excluded: & 7.3
+  \end{tabular}
+
+  \vspace*{\baselineskip}
+  {\scriptsize
+  [*]: This optimization fundamentally relies on the ``relevant
+  renames'' optimization, so I'm fudging here and using only the
+  necessary part of the ``relevant renames'' optimization needed for
+  this optimization.
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Wrapping Up}
+\subsection{Performance Summary}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Performance Summmary}
+
+  Overall results of individual optimizations:\\
+  \pause
+  \vspace*{0.5\baselineskip}
+  \qquad
+  \begin{tabular}{l|r|r}
+    Optimization                    &
+      \multicolumn{1}{p{5.5em}}{\centering Sole-source Speed-up}  &
+      \multicolumn{1}{|p{5.5em}}{\centering Sole-source Slow-down} \\
+    \hline
+    Relevant renames                & 75.85\hspace*{1.4em} & 4.90 \hspace*{1.4em} \\
+    No copy detection               &  2.83\hspace*{1.4em} & 1.02 \hspace*{1.4em} \\
+    Caching renames                 &  5.52\hspace*{1.4em} & 1.73 \hspace*{1.4em} \\
+    Basename-guided detection       &  5.83\hspace*{1.4em} & 2.01 \hspace*{1.4em} \\
+    Trivial directory resolution[*] &  4.64\hspace*{1.4em} & 7.27 \hspace*{1.4em}
+  \end{tabular}
+
+  \pause
+  \vspace*{1.5\baselineskip}
+  As a reminder, overall optimization results:\\
+  \vspace*{0.5\baselineskip}
+  \qquad
+  \begin{tabular}{l|r|c|r}
+    Testcase      & \multicolumn{1}{c|}{Old timing}
+                  & \multicolumn{1}{c|}{New timing}
+                  & \multicolumn{1}{p{4.4em}}{\centering Speed-up factor} \\
+    \hline
+    few-renames:  &   18.934 s & .1892 s &  100.1 \hspace*{0.3em} \\
+    mega-renames: & 6424.660 s & .6573 s & 9774.3 \hspace*{0.3em} \\
+    just-one:     &  173.093 s & .2612 s &  662.7 \hspace*{0.3em}
+  \end{tabular}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Blog}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Blog Posts}
+
+  Those curious about more details on the optimizations are encouraged
+  to read my blog posts on the subject:
+
+  \qquad
+  \begin{center}
+  Optimizing Git's Merge Machinery:\\ \href{https://blog.palantir.com/optimizing-gits-merge-machinery-1-127ceb0ef2a1}{\textcolor{blue}{Part I}}, 
+  \href{https://blog.palantir.com/optimizing-gits-merge-machinery-2-d81391b97878}{\textcolor{blue}{part II}}, 
+  \href{https://blog.palantir.com/optimizing-gits-merge-machinery-3-2dc7c7436978}{\textcolor{blue}{part III}}, 
+  \href{https://blog.palantir.com/optimizing-gits-merge-machinery-part-iv-5bbc4703d050}{\textcolor{blue}{part IV}}, 
+  \href{https://blog.palantir.com/optimizing-gits-merge-machinery-part-v-46ff3710633e}{\textcolor{blue}{part V}}, and
+  \href{https://blog.palantir.com/optimizing-gits-merge-machinery-6-7bf887a131d8}{\textcolor{blue}{part VI}}.
+  \end{center}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
