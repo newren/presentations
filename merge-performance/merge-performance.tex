@@ -1,0 +1,1821 @@
+\ifx\handout\undefined
+  \documentclass[compress,t]{beamer}
+\else
+  \documentclass[compress,handout,t]{beamer}
+  \usepackage{pgfpages}
+  %\pgfpagesuselayout{8 on 1}[letterpaper,border shrink=1mm]
+  \pgfpagesuselayout{8 on 1}[letterpaper,border shrink=0mm]
+\fi
+
+\input{preamble}
+\usepackage{multicol}
+\usepackage{ulem} % used in definition of \redout
+
+\usepackage{tikz}
+\usetikzlibrary{arrows,snakes,backgrounds,shapes}
+\tikzstyle{commit}=[circle,draw=blue!50,fill=blue!20]
+\tikzstyle{redCommit}=[circle,draw=MyRed!50,fill=MyRed!20]
+\tikzstyle{orphanCommit}=[black!50,circle,draw=blue!20,fill=blue!10]
+\tikzstyle{droppedCommit}=[black!60,circle,draw=MyRed!50,fill=MyRed!20,double]
+\tikzstyle{ref}=[rectangle,draw=black!50,fill=black!20]
+\tikzstyle{specialRef}=[black!50,rectangle,draw=black!50,fill=black!10]
+\tikzstyle{msg}=[tape,tape bend top=none,draw=MyRed!50,fill=MyRed!20]
+\tikzstyle{prnt}=[thick,-stealth']
+\tikzstyle{oprnt}=[black!50,dotted,-stealth',draw=black!50]
+\tikzstyle{bptrnext}=[black!80,dashed,-stealth',draw=black!80]
+\tikzstyle{bptr}=[thick,-latex']
+\tikzstyle{nextmsg}=[thick,-open triangle 45]
+\newcommand{\parent}[1]{\char94{#1}}
+\newcommand{\ancestor}[1]{\char126{#1}}
+\colorlet{myred}{red!90!black} % slightly darker than normal red
+\colorlet{myblue}{cyan}        % plain cyan works; might consdier darkening
+\colorlet{mygreen}{green!70!black} % slightly darker than normal green
+\colorlet{mypurple}{red!45!blue}
+\definecolor{mybrown}{rgb}{0.45,0.28,0.13}
+\newcommand\redout{\bgroup\markoverwith
+    {\textcolor{myred}{\rule[.5ex]{2pt}{0.8pt}}}\ULon
+}
+
+\title{Scaling the Merge Machinery}
+
+\author{Elijah Newren}
+\institute{Palantir Technologies}
+
+%\date{January 8, 2014}
+%\date{Palantir Technologies}
+\date{}
+
+%\includeonlyframes{wip}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \titlepage
+  %\mode<handout>{
+  %\vfill
+  %\begin{center}\scriptsize
+  %  \Link{http://wiki.yojoe.local/ITOOLS/git-tutorial}
+  %  \vfill
+  %  \cmd{git clone gerrit:itools/public/git-tutorial}
+  %\end{center}
+  %{\tiny\Hidden{\input{VERSION-FILE}}}
+  %}
+\end{frame}
+
+\ifx\handout\undefined
+\title{Git Merge}
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\title{(Git Merge)$^2$}
+\begin{frame}
+  \titlepage
+\end{frame}
+\fi
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Overhaul]{``Merge machinery''}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{comment}
+\subsection{Division}
+\begin{frame}
+  \frametitle{Division}
+
+  \begin{itemize}[<+->]
+
+    \item xdiff/xmerge.c: 3-way content merging of a single file
+    \item ll-merge.c: thin xdl\_merge wrapper; heeds path-specific
+          .gitattributes such as special drivers or normalization
+
+    \item merge-recursive.c (default strategy and main engine): finds
+          and pre-merges merge-bases, handles path based-conflicts,
+          mode-based conflicts (e.g. symlink vs. submodule),
+          renames, and wires everything together.
+      % merge-recursive is about 2x the size of the other three pieces combined
+
+    \item builtin/merge.c: which strategy (octopus, fast-forward,
+          default), diffstat, etc.
+  \end{itemize}
+
+\end{frame}
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Affected commands}
+\begin{frame}
+  \frametitle{Affected Commands}
+
+  The merge machinery (merge-recursive) powers several aspects of git:
+
+  \begin{itemize}
+    \item merge
+    \item cherry-pick
+    \item revert
+    \item rebase
+    \item am -3
+    \item stash
+    \item checkout -m
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Issues]{The journey}
+\begin{frame}
+  \frametitle{The journey}
+
+  A few years ago...
+
+  \begin{minipage}{0.88\textwidth}
+  \begin{block}{Issues starting the journey}
+    {\footnotesize
+    \begin{itemize}
+      \item cherry-pick would fail to detect renames and fail to notify
+            about needed merge.renameLimit
+      \item cherry-pick would ignore merge.renameLimit > 32767
+      \item if directory renames involved, files would be left in wrong
+            directory
+      \item people wrote custom purpose scripts to cherry-pick things
+      \item after fixing merge.renameLimit, cherry-picking small patches
+            would take more than 9 minutes.
+    \end{itemize}
+    }
+  \end{block}
+  \end{minipage}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Challenges]{Overhaul}
+\begin{frame}
+  \frametitle{Quotes}
+
+  The two most prolific authors of git opining on merge-recursive:
+
+  \only<2->{
+  \begin{itemize}
+
+    \item ``[It is] some pretty hairy code.  Every time I
+            start to look at it I get confused and can't remember what
+            breakthrough I thought I was close to making before.''
+            %
+            \href{https://public-inbox.org/git/20110616210551.GA15505@sigill.intra.peff.net/}{(Jeff King)}
+
+    \only<3>{
+    \item ``I've written off that code as mostly unsalvageable long
+            time ago.''
+          \href{https://public-inbox.org/git/xmqqk1ydkbx0.fsf@gitster.mtv.corp.google.com/}{(Junio Hamano)}
+    }
+
+  \end{itemize}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Goals}
+
+  Goals for my rewrite of the machinery are to improve each of:
+  \begin{itemize}
+    \item Maintainability \& understandability
+    \item API Quality (enable new features?)
+    \item Correctness
+    \only<1| handout:0>{
+    \item Performance
+    }
+    \only<2>{
+    \item {\textbf{Performance}}
+    }
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Strategy types]{Types of performance strategies}
+\begin{frame}
+  \frametitle{Types of performance strategies}
+
+  \only<1-6| handout:1>{
+  I have always enjoyed performance talks; they make me feel smarter:
+  \only<2->{
+  \begin{itemize}
+    \item Squeezing performance out of the hardware
+    \only<3->{
+    \item Applying ideas from other problem domains to new areas
+    \only<4->{
+    \item Using clever approximation algorithms to get near solutions
+    \only<5->{
+    \item Inventing new algorithms
+    }}}
+  \end{itemize}
+  \only<6| handout:1>{
+    \begin{tikzpicture}[remember picture, overlay]
+      \draw[myred,line width=3pt] ( 0,0.5) -- (11,2.7);
+      \draw[myred,line width=3pt] (11,0.5) -- ( 0,2.7);
+    \end{tikzpicture}
+  }
+  }}
+
+  \only<7-| handout:2>{
+  Actual performance strategies used:
+  \only<8->{
+  \begin{itemize}
+    %\item Avoid well-known slow constructs
+    %\only<9->{
+    \item Don't do unnecessary work
+    \only<9->{
+    \item Don't redo work
+    \only<10->{
+    \item Don't redo unnecessary work
+    \only<11->{
+    \item Fudge "unnecessary"
+    }}}%}
+  \end{itemize}
+  }}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\subsection*{Warning}
+\begin{frame}
+  \frametitle{Warning}
+
+  \vfill
+  \begin{center}
+    \begin{minipage}{0.55\textwidth}
+    \begin{itemize}
+      \item Glossing over lots of details
+      \item Simplifications not fully accurate
+    \end{itemize}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+\begin{comment}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\section[Simple Wins]{Simple performance wins}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\subsection[Slow Constructs]{Avoiding slow constructs}
+\begin{frame}[fragile]
+  \frametitle{Avoiding well-known slow constructs}
+
+  From string-list.h:
+  {\scriptsize
+  \vspace*{-0.5\baselineskip}
+  \begin{verbatim}
+ * NOTE: It is more efficient to build an unsorted list and sort it
+ * afterwards, instead of building a sorted list (`O(n log n)` instead of
+ * `O(n^2)`).
+  \end{verbatim}
+  \vspace*{-\baselineskip}
+  }
+
+  \only<2>{
+  Oops.
+  }
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Avoiding well-known slow constructs}
+
+  Comment above \texttt{remove\_marked\_cache\_entries()}:
+  {\scriptsize
+  \vspace*{-0.5\baselineskip}
+  \begin{verbatim}
+/*
+ * Remove all cache entries marked for removal...this is much more
+ * effective than calling remove_index_entry_at() for each entry to be
+ * removed.
+ */
+  \end{verbatim}
+  }
+
+  \only<2->{
+  \vspace*{-1.25\baselineskip}
+  \begin{itemize}
+    \item merge-recursive's design incompatible with this, instead:
+    \item O($tracked\_files$) work required for each deletion/insertion
+    \item O($2*files\_changed$) deletions/insertions
+  \end{itemize}
+  }
+
+  \only<3->{
+    Needed a significant restructure to avoid this quasi-quadratic
+    behavior.
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\subsection[Unnecessary]{Avoiding unnecessary work}
+\begin{frame}[fragile]
+  \frametitle{Avoiding unnecessary work}
+
+  \begin{center}
+  \begin{minipage}{0.83\textwidth}
+  \begin{block}{How merge-recursive got its name}
+    {\scriptsize
+    \begin{semiverbatim}
+static struct commit* merge_recursive_internal(side1, side2)
+\{
+    ...
+    \uncover<2->{
+    /* multiple merge bases? merge them together first. */\only<1-2| handout:0>{
+    combined = bases[0];    }\only<3->{
+    {\color{myred}combined = bases[0];}   }
+    for (base in bases[1:])
+        combined = merge_recursive_internal(combined, base);  \only<1-2|handout:0>{
+    discard_index();
+    if (!inner_merge)
+        repo_read_index();  }\only<3->{{\color{myred}
+    discard_index();
+    if (!inner_merge)
+        repo_read_index();}   }
+    }
+    result = merge_trees_internal(\only<1|handout:0>{base}\only<2->{combined}, side1, side2);
+    ...
+\}
+    \end{semiverbatim}
+    }
+  \end{block}
+  \end{minipage}
+  \end{center}
+
+  %\vspace*{\baselineskip}
+  \only<3->{What if there is only one merge base to start? }\only<4>{Oops.}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\subsection[Redoing]{Avoiding redoing work}
+\begin{frame}
+  \frametitle{Avoiding redoing work}
+
+  Tree walking from merge-recursive.c:
+  \only<2->{
+  \begin{itemize}
+    \item unpack\_trees()
+    \only<3->{
+    \item diff to find renames from base->side1
+    \only<4->{
+    \item diff to find renames from base->side2
+    \only<5->{
+    \item get all file and directory names on side1
+    \only<6->{
+    \item get all file and directory names on side2
+    \only<7->{
+    \item 6x get stage data \only<8->{for EACH rename \only<9->{on EACH side}}
+    }}}}}
+  \end{itemize}
+  }
+  \only<10->{Total: $5+6*number\_of\_renames$}
+
+  \only<11->{
+  \vspace*{1.5\baselineskip}
+  Tree walking from merge machinery rewrite:
+  \only<12->{
+  \begin{itemize}
+    \item collect\_merge\_info()
+    \only<13->{
+    \item unpack\_trees()
+    }
+  \end{itemize}
+  }
+  \only<14->{Total: $2$}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection*{But...}
+\begin{frame}
+  \frametitle{The big kicker...}
+
+  \vfill
+  \begin{center}
+  \begin{minipage}{0.55\textwidth}
+    All of these optimizations combined are often a drop in a bucket
+    compared to the cost of rename detection.
+  \end{minipage}
+  \end{center}
+
+\end{frame}
+\end{comment}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Background]{Merging and renames background}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Content merge}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Three-way content merge}
+
+  \vspace*{-\baselineskip}
+  \begin{multicols}{2}
+    File from branch Side1:\\
+    {\footnotesize\texttt{%
+    %\vspace*{-0.125\baselineskip}%
+    \quad{}...                             \\
+    \quad{}speak\_like\_a\_pirate(arrrgs); \\
+    \quad{}\only<3->{\color{myred}}explore\_sea(aye, matey);\only<3->{\color{black}}\\
+    \quad{}shiver(me.timbers);             \\
+    %\vspace*{-0.25\baselineskip}%
+    \quad{}...                             \\
+    }}
+    \columnbreak
+    \pause
+    Same file from branch Side2:\\
+    {\footnotesize\texttt{%
+    %\vspace*{-0.125\baselineskip}%
+    \quad{}...                             \\
+    \quad{}speak\_like\_a\_pirate(arrrgs); \\
+    \quad{}\only<3->{\color{myred}}explore\_sea(me.love[0]);\only<3->{\color{black}}\\
+    \quad{}shiver(me.timbers);             \\
+    %\vspace*{-0.5\baselineskip}%
+    \quad{}...
+    }}
+  \end{multicols}%
+
+  \only<4->{
+    \vspace{-0.5\baselineskip}
+    Correct merge depends on the version in the merge base:\\
+    {\footnotesize\texttt{%
+      \quad{}speak\_like\_a\_pirate(arrrgs);\\
+      \quad{}%
+      %\only<4|handout:0>{{\color{myblue}?????}}%
+      \only<4-8|handout:0>{{\color{myblue}?????}}%
+      %\only<5-6|handout:0>{{\color{myblue}explore\_sea(aye, matey);}}%
+      %\only<7-8|handout:0>{{\color{myblue}explore\_sea(me.love[0]);}}%
+      \only<9->{{\color{myblue}explore\_sea(plus, plus);}}%
+      \\
+      \quad{}shiver(me.timbers);\\
+    }}
+  }
+
+  %\only<6-10|handout:1>{
+  \only<10|handout:1>{
+  \vspace*{0.5\baselineskip}
+  Which results in the following merge:\\
+  {\footnotesize\texttt{%
+    \quad{}speak\_like\_a\_pirate(arrrgs);\\
+    \quad{}%
+    %\only<7,9|handout:0>{\qquad}%
+    %\only<6|handout:0>{{\color{mygreen}explore\_sea(me.love[0]);}}%
+    %\only<8|handout:0>{{\color{mygreen}explore\_sea(aye, matey);}}%
+    \only<10>{{\color{mygreen}
+    <{}<{}<{}<{}<{}<{}< HEAD  \\
+    \quad{}explore\_sea(aye, matey); \\
+    \quad{}=======\\
+    \quad{}explore\_sea(me.love[0]); \\
+    \quad{}>{}>{}>{}>{}>{}>{}> branchB
+    }}
+    \\
+    \quad{}shiver(me.timbers);\\
+  }}
+  }
+
+  \only<11-| handout:2>{
+    \vspace*{-0.5\baselineskip}
+    \begin{multicols}{2}
+      Shorthand:\\
+      {\footnotesize\texttt{%
+      \quad{}\phantom{Base1: }path\\
+      \quad{}Base\phantom{1}: hash\_orig\\
+      \quad{}Side1: hash\_A\\
+      \quad{}Side2: hash\_B\\
+      }}
+    \columnbreak
+    \uncover<12->{
+      Example:\\
+      {\footnotesize\texttt{%
+      \quad{}\phantom{Base1: }buccaneer.c\\
+      \quad{}Base\phantom{1}: ba771ed\\
+      \quad{}Side1: 57abbed\\
+      \quad{}Side2: b1a57ed
+      }}
+    }
+    \end{multicols}%
+  }
+
+  \only<13| handout:2>{
+    \vspace*{-0.5\baselineskip}
+    {\footnotesize%
+    
+      Note: If any two of the hashes match, we can resolve without
+      looking at the contents of the file.
+      
+    }
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection[Basic merging]{Combining content merges}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Three-way Merging}
+
+  \cl{git checkout master}\\
+  \cl{git merge feature}\\[0.5em]
+
+  \uncover<3->{
+  Get three relevant trees}\uncover<4->{, then for each path:
+  \begin{itemize}
+    \item Get version of path in each tree
+    \item Do three-way content merge
+  \end{itemize}
+  }
+
+  \vspace*{-1.5em}
+
+  \pause
+  \begin{center}
+    \begin{minipage}{0.5\textwidth}
+    \begin{block}{Merge}
+      \begin{tikzpicture}[node distance=10mm]
+        \only<2->{
+          \node[commit] (A) {A};
+        }
+        \only<2,6>{
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (C)  [below right of=A,yshift=-1em] {C};
+        }
+        \only<3-5>{
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (C)  [below right of=A,yshift=-1em] {C};
+        }
+        \only<2->{
+          \node[commit] (E)  [right of=D] {E};
+          \path[prnt] (E) edge (D);
+          \path[prnt] (D) edge (B);
+          \path[prnt] (B) edge (A);
+
+          \node[commit] (F)  [right of=C] {F};
+          \path[prnt] (F) edge (C);
+          \path[prnt] (C) edge (A);
+
+          \node[ref]    (f) [below of=F] {feature};
+          \path[bptr] (f) edge (F);
+          \node[ref]    (m)  [above of=E] {master};
+        }
+
+        \only<2-5>{
+          \path[bptr] (m) edge (E);
+        }
+        \only<5>{
+          \node[redCommit] (G)  [right of=E] {G};
+        }
+        \only<6| handout:0>{
+          \node[commit] (G)  [right of=E] {G};
+        }
+        \only<5->{
+          \path[prnt] (G) edge (E);
+          \path[prnt] (G) edge[bend left] (F);
+        }
+        \only<6| handout:0>{
+          \path[bptr] (m) edge (G);
+        }
+        \only<0| handout:1>{
+          \path[bptrnext] (m) edge (G);
+        }
+      \end{tikzpicture}
+    \end{block}
+    \end{minipage}
+  \end{center}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Three-way Merging}
+
+  \cl{git checkout master}\\
+  \cl{git cherry-pick C..feature}\\[0.5em]
+
+  \vspace*{-1.5em}
+  \begin{center}
+    \begin{minipage}{0.5\textwidth}
+    \begin{block}{
+        \only<1  | handout:0>{Starting state}
+        \only<2-4| handout:1>{Picking F}
+        \only<5  | handout:0>{Picked F}
+        \only<6-8| handout:2>{Picking G}
+        \only<9  | handout:0>{Picked G}
+        \only<10-| handout:0>{Cherry picking complete}
+        \phantom{Cg}% To make sure all titles have the same height
+        }
+      \begin{tikzpicture}[node distance=10mm]
+        \only<1->{
+          \node[commit] (A) {A};
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (E)  [right of=D] {E};
+          \node[commit] (C)  [below right of=A,yshift=-1em] {C};
+          \node[commit] (F)  [right of=C] {F};
+          \node[commit] (G)  [right of=F] {G};
+        }
+        \only<3-7|handout:1>{
+          \node[orphanCommit] (A)  {A};
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (G)  [right of=F] {G};
+        }
+        \only<1->{
+          \path[prnt] (E) edge (D);
+          \path[prnt] (D) edge (B);
+          \path[prnt] (B) edge (A);
+
+          \path[prnt] (G) edge (F);
+          \path[prnt] (F) edge (C);
+          \path[prnt] (C) edge (A);
+
+          \node[ref]  (f) [below of=G] {feature};
+          \path[bptr] (f) edge (G);
+          \node[ref]  (m) [above of=E] {master};
+        }
+
+        \only<1-9| handout:1-2>{
+          \path[bptr] (m) edge (E);
+          %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
+          %\path[bptr] (h) edge (m);
+        }
+        \only<4| handout:1>{
+          \node[redCommit] (FS) [right of=E, xshift=0.1em] {F$^*$};
+          \path[oprnt] (FS) edge[bend left] (F);
+        }
+        \only<4-| handout:1-2>{
+          \path[prnt] (FS) edge (E);
+        }
+        \only<0| handout:1>{
+          \path[bptrnext] (m) edge[bend left] (FS);
+        }
+        \only<5-| handout:2>{
+          \node[commit] (A) {A};
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (FS) [right of=E, xshift=0.1em] {F$^*$};
+          \node[commit] (F)  [right of=C] {F};
+          \node[commit] (G)  [right of=F] {G};
+        }
+        \only<7-8| handout:2>{
+          \node[orphanCommit] (A) {A};
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (E)  [right of=D] {E};
+          \node[orphanCommit] (C)  [below right of=A,yshift=-1em] {C};
+        }
+        \only<8| handout:2>{
+          \node[redCommit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
+          \path[oprnt] (GS) edge[bend left] (G);
+        }
+        \only<9-| handout:0>{
+          \node[commit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
+        }
+        \only<8-| handout:2>{
+          \path[prnt] (GS) edge (FS);
+        }
+        \only<10-| handout:0>{
+          \path[bptr] (m) edge[bend left] (GS);
+          %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
+          %\path[bptr] (h) edge (m);
+        }
+        \only<0| handout:2>{
+          \path[bptrnext] (m) edge[bend left] (GS);
+        }
+      \end{tikzpicture}
+    \end{block}
+    \end{minipage}
+  \end{center}
+
+  \only<11>{
+  Rebasing and reverting are handled similarly to cherry-picking.
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection[Renames]{Why renames are important}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Why renames are important}
+
+  \vspace*{-\baselineskip}
+  {\scriptsize
+  \begin{multicols}{2}
+    \begin{minipage}{0.45\textwidth}
+    \begin{block}{If a rename is not detected:}
+        {\texttt{%
+        \begin{tabular}{lll}
+                 & buccaneer.c  & viking.c  \\
+          Base:  & ba771e5      & 0000000 \\
+          Side1: & e5ca185      & 0000000 \\
+          Side2: & 0000000      & defea75 \\
+        \end{tabular}
+        }}
+
+      \uncover<2->{
+        \vspace*{1em}
+        Then:
+        \begin{itemize}[<+(1)->]
+          \item buccaneer.c: modify/delete conflict
+          \item viking.c: totally new file
+          \item no textual merging
+        \end{itemize}
+      }
+
+      \uncover<5->{
+        \vspace*{1em}
+        As reported by git status:\\[0.5em]
+        {\texttt{%
+          \quad{}Changes to be committed:\\
+          \quad{}\enskip{}      new file: viking.c\\
+          \quad{}Unmerged paths:\\
+          \quad{}\enskip{}	deleted by them: buccaneer.c\\
+        }}
+      }
+    \end{block}
+    \end{minipage}
+
+  \columnbreak
+
+    \only<6->{
+    \begin{minipage}{0.48\textwidth}
+    \begin{block}{If we detect renames on each side of history:}
+        \texttt{%
+        \begin{tabular}{ll}
+                  & buccaneer.c $\Rightarrow$ viking.c   \\
+          Base:   & ba771e5 \\
+          Side1:  & e5ca185 \\
+          Side2:  & defea75 \\
+          \uncover<7->{%
+          Merged: & acc0575
+          }
+        \end{tabular}
+        }
+
+      \uncover<8->{
+        \vspace*{1em}
+        Then:
+        \begin{itemize}[<+(4)->]
+          \item buccaneer.c: removed
+          \item viking.c: contains merged content
+        \end{itemize}
+      }
+
+      \uncover<10->{
+        \vspace*{1em}
+        As reported by git status:\\[0.5em]
+        EITHER\\
+        {\texttt{%
+          \quad{}Changes to be committed:\\
+          \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+        }}
+        OR\\
+        {\texttt{%
+          \quad{}Changes to be committed:\\
+          \quad{}\,	deleted: buccaneer.c \\
+          \quad{}Unmerged paths:\\
+          \quad{}\,\,	both modified:   viking.c\\
+        }}
+      }
+
+%      \begin{comment}
+%      \only<11->{
+%        \vspace*{0.6em}
+%        ...and do a three-way content merge:\\[0.25em]
+%        {\texttt{%
+%          \quad{}speak\_like\_a\_pirate(arrrgs);\\
+%          {\color{mygreen}
+%          \quad{}<{}<{}<{}<{}<{}<{}< HEAD{\color{myred}:buccaneer.c}  \\
+%          \quad{}explore\_sea(aye, matey); \\
+%          \quad{}=======\\
+%          \quad{}explore\_sea(me.love[0]); \\
+%          \quad{}>{}>{}>{}>{}>{}>{}> branchB{\color{myred}:viking.c}\\
+%          }
+%          \quad{}shiver(me.timbers);\\
+%        }}
+%       }
+%      \end{comment}
+
+    \end{block}
+    \end{minipage}
+    } % end of \only<6->
+  \end{multicols}
+  } % end of \scriptsize
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection[Detection]{How rename detection works}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{How rename detection works}
+
+  How does git detect renames?  For each side...\\[0.25em]
+  \pause
+  \vspace*{-1.0\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l}
+      Files in Base  &  Files in given side \\
+      \hline
+      README.md      &  README.md   \\
+      archery.js     &  corrupt.js  \\
+      baseball.js    &  divine.js   \\
+      build.log      &  dull.js     \\
+      football.js    &  grand.js    \\
+      golf.js        &  lame.js     \\
+      running.js     &
+    \end{tabular}
+    }
+  \end{center}
+  \vspace*{-1.5\baselineskip}
+
+  \pause
+  \vspace*{\baselineskip}
+  For each pair of files, what percentage of lines are found in both?
+  \pause
+  \vspace*{-0.25\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l|l|l|l|l}
+                   & corrupt.js & divine.js & dull.js & grand.js & lame.js \\
+      \hline
+      archery.js   &&&&& \\
+      baseball.js  &&&&& \\
+      build.log    &&&&& \\
+      football.js  &&&&& \\
+      golf.js      &&&&& \\
+      running.js   &&&&&
+    \end{tabular}
+    }
+  \end{center}
+  \uncover<5| handout:1>{
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[draw,ellipse,rotate=15,color=mygreen] at (7.2, 1.5)
+           {Matrix of similarity percentages};
+    \end{tikzpicture}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{How rename detection works}
+
+    \vfill
+
+    \begin{center}
+    \begin{minipage}{0.83\textwidth}
+    \begin{block}{\begin{center}Crux of the problem\end{center}}
+      \begin{center}
+        \vspace*{1\baselineskip}
+
+        Rename detection is O($M*N$), where $M$ and $N$
+        are \textbf{huge}.
+
+        \vspace*{2\baselineskip}
+
+        {\scriptsize
+          \{{\color{mygreen}$M$}, {\color{orange}$N$}\}
+          \textasciitilde{} O(combined line count of potential rename
+          \{{\color{mygreen}sources}, {\color{orange}targets}\})
+        }
+      \end{center}
+    \end{block}
+    \end{minipage}
+    \end{center}
+
+    \vfill
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Strategies]{Strategies to improve rename performance}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Bypassing]{Exact renames}
+
+\begin{frame}
+  \frametitle{}
+
+  \vfill
+  {\Large
+  \begin{center}
+    Optimization 1: Don't redo work\\
+    \vspace*{\baselineskip}
+    \pause
+    Don't look for a better than perfect match.
+  \end{center}
+  }
+  \vfill
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Exact renames}
+
+  \vspace*{-1.5\baselineskip}
+  \begin{center}
+  \begin{minipage}{0.83\textwidth}
+  \begin{block}{Detecting renames}
+    {\scriptsize
+    \begin{semiverbatim}
+void detect_renames_and_copies(...)
+\{
+    ...\uncover<2->{{\color{blue}
+    exact_count = find_different_name_same_hash();   }\uncover<3->{{\color{myred}
+    \only<1-3>{/* Keep all the source files as options for copies! */}   }}}
+    for (dest_path in potential_rename_targets) \{   \uncover<2->{{\color{blue}
+        if (already_paired(dest_path)) continue;   }}
+        for (source_path in potential_rename_sources) \{   \uncover<3->{\uncover<4->{{\color{mygreen}
+            if (!DETECT_COPIES &&
+                already_paired(source_path))
+                continue;   }}}
+            compute_similarity();
+        \}
+    \}
+    ...
+\}  \end{semiverbatim}
+    }
+  \end{block}
+  \end{minipage}
+  \end{center}
+
+  %\only<5->{
+  %  \vspace*{-0.25\baselineskip}
+  %  No sense wasting time trying to find a better match than a
+  %  100\% rename.
+  %}
+
+  %\only<6>{
+  %  \vspace*{-0.5\baselineskip}
+  %  Speed-up: varies; my first testcase saw a factor of 2.
+  %}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Capitulating]{Partial capitulation}
+\begin{frame}
+  \frametitle{}
+
+  \vfill
+  {\Large
+  \begin{center}
+    Optimization 2: Don't do unnecessary work\\
+    \vspace*{\baselineskip}
+    \pause
+    If you can get the same answer without an expensive computation,
+    skip the expensive computation.
+  \end{center}
+  }
+  \vfill
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Partial capitulation}
+
+  \vspace*{-\baselineskip}
+  \only<2->{
+  {\scriptsize
+  \begin{multicols}{2}
+    \begin{minipage}{0.48\textwidth}
+    \begin{block}{If a rename is not detected for the merge:}
+        {\texttt{%
+        \begin{tabular}{lll}
+                 & buccaneer.c  & viking.c \\
+          Base:
+            &
+            \only<2  |handout:0>{5eac0a57}%
+            \only<3- |handout:1-2>{{\color{myred}5eac0a57}}%
+            &
+            00000000  \\
+          Side1:
+            &
+            \only<2  |handout:0>{5caff01d}%
+            \only<3  |handout:0>{{\color{myred}5caff01d}}%
+            \only<4- |handout:1-2>{{\color{mygreen}5eac0a57}}
+            &
+            00000000  \\
+          Side2: & 00000000      &  c01055a1 \\
+        \end{tabular}
+        }}
+
+        \vspace*{1em}
+        Then:
+        \begin{itemize}
+          \item buccaneer.c:
+                \only<2-4|handout:0>{modify/delete conflict}%
+                \only<5-8|handout:1>{{\color{myred}modify/delete conflict}}%
+                \only<9- |handout:2>{{\color{mygreen}deleted as expected}}
+          \item viking.c: totally new file
+          \item
+                \only<2-4|handout:0>{no textual merging}%
+                \only<5-9|handout:1>{\color{myred}no textual merging}%
+                \only<10-|handout:2>{no textual merging \color{mygreen}needed}
+        \end{itemize}
+
+        \vspace*{1em}
+        As reported by git status:\\[0.5em]
+        {\texttt{%
+          \only<2-4|handout:0>{
+            \quad{}Changes to be committed:\\
+            \quad{}\enskip{}      new file: viking.c\\
+            \quad{}Unmerged paths:\\
+            \quad{}\enskip{}	deleted by them: buccaneer.c\\
+          }%
+          \only<5-10|handout:1>{{\color{myred}
+            \quad{}Changes to be committed:\\
+            \quad{}\enskip{}      new file: viking.c\\
+            \quad{}Unmerged paths:\\
+            \quad{}\enskip{}	deleted by them: buccaneer.c\\
+          }}%
+          \only<11-|handout:2>{{\color{mygreen}
+            \quad{}Changes to be committed:\\
+            \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+            \vspace*{2\baselineskip}
+          }}
+        }}
+    \end{block}
+    \end{minipage}
+
+  \columnbreak
+
+    \begin{minipage}{0.48\textwidth}
+    \begin{block}{If we detect renames on each side of history:}
+        \texttt{%
+        \begin{tabular}{ll}
+                 & buccaneer.c $\Rightarrow$ viking.c \\
+          Base:
+            &
+            \only<2  |handout:0>{5eac0a57}%
+            \only<3- |handout:1-2>{{\color{myred}5eac0a57}} \\
+          Side1:
+            &
+            \only<2  |handout:0>{5caff01d}%
+            \only<3  |handout:1>{{\color{myred}5caff01d}}%
+            \only<4- |handout:2>{{\color{mygreen}5eac0a57}} \\
+          Side2: &  c01055a1 \\
+          Merged:
+            &
+            \only<2-4|handout:0>{0b57ac1e}%
+            \only<5-6|handout:1>{{\color{myred}????????}}%
+            \only<7- |handout:2>{{\color{mygreen}c01055a1}}
+        \end{tabular}
+        }
+
+        \vspace*{1em}
+        Then:
+        \begin{itemize}
+          \item buccaneer.c: removed
+          \item viking.c:
+                  \only<1-4|handout:0>{contains merged content}%
+                  \only<5  |handout:1>{{\color{myred}contains merged content}}%
+                  \only<6- |handout:2>{{\color{mygreen}no content merge was needed}}
+        \end{itemize}
+
+        \vspace*{1em}
+        As reported by git status:\\[0.5em]
+        \only<2-4|handout:0>{
+          EITHER\\
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+          }}
+          OR\\
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	deleted: buccaneer.c \\
+            \quad{}Unmerged paths:\\
+            \quad{}\,\,	both modified:   viking.c\\
+          }}
+        }
+        \only<5-7|handout:1>{{\color{myred}
+          EITHER\\
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+          }}
+          OR\\
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	deleted: buccaneer.c \\
+            \quad{}Unmerged paths:\\
+            \quad{}\,\,	both modified:   viking.c\\
+          }}
+        }}
+        \only<8-|handout:2>{{\color{mygreen}
+          {\texttt{%
+            \quad{}Changes to be committed:\\
+            \quad{}\,	renamed: buccaneer.c\hspace*{-0.25em}  ->\hspace*{-0.25em} viking.c\\
+          }}
+          \vspace*{6\baselineskip}
+        }}
+
+    \end{block}
+    \end{minipage}
+  \end{multicols}
+
+  \only<12>{
+    \vspace*{-3\baselineskip}
+    \begin{minipage}{0.48\textwidth}
+    \begin{center}
+      Same results whether or not rename is detected by merge machinery.
+    \end{center}
+    \end{minipage}
+  }
+  }} % end of \scriptsize
+
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Partial capitulation -- Caveats?}
+
+  \vspace*{-1.5\baselineskip}
+  \begin{center}
+  \begin{minipage}{0.8\textwidth}
+  \begin{block}{New Strategy}
+    Exclude potential source from rename detection \textbf{if} it is
+    unmodified by \textit{other} side of history\only<1-3|handout:0>{.
+      \vspace*{\baselineskip}
+    }%
+    \only<4-|handout:1>{
+      {\color{mygreen}
+      and parent directory of source file exists on \textit{same} side of
+      history}.
+    }
+
+  \end{block}
+  \end{minipage}
+  \end{center}
+
+  \only<2->{
+  \vspace*{-0.5\baselineskip}
+  Possible problems:
+  \only<3->{
+  \begin{itemize}
+    \item
+          \only<3-4|handout:0>{causes issues for directory rename detection}
+          \only<5->{\redout{causes issues for directory rename detection}}
+    \only<6->{
+    \item rename/add conflict looks like add/add
+    \only<7->{
+    \item rename/rename(2to1) conflict looks like rename/add or add/add
+    }}
+  \end{itemize}
+  }}
+
+  \only<8->{
+  ``Mis-detected'' conflict types:
+  \only<9->{
+  \begin{itemize}
+    \item
+      \only<9-12|handout:0>{Different conflict-related files in the working copy}
+      \only<13->{\redout{Different conflict-related files in the working copy}}
+    \only<10->{
+    \item
+      \only<10-12|handout:0>{Different conflict-related entries in the index}
+      \only<13->{\redout{Different conflict-related entries in the index}}
+    \only<11->{
+    \item Different stdout; reports e.g. \texttt{CONFLICT(add/add)} instead
+          of \texttt{CONFLICT(rename/add)}
+    }}
+  \end{itemize}
+  }}
+
+  \only<12->{
+  After unifying file collision conflict handling...%
+  \only<14>{{\color{mygreen}stdout is only difference.}}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Partial capitulation -- micro or mega optimization?}
+
+  \vspace*{-1.5\baselineskip}
+  \begin{center}
+  \begin{minipage}{0.8\textwidth}
+  \begin{block}{New Strategy}
+    Exclude potential source from rename detection \textbf{if} it is
+    unmodified by \textit{other} side of history and parent directory
+    of source file exists on \textit{same} side of history.
+  \end{block}
+  \end{minipage}
+  \end{center}
+
+  \only<2->{
+    \begin{center}
+    How much does this new strategy help?
+    \end{center}
+  }
+  \only<3->{
+    \vspace*{-1.0\baselineskip}
+    \begin{center}
+    \begin{minipage}{0.4\textwidth}
+    \begin{block}{\begin{center}A Common Case\end{center}}
+      \qquad
+      O($M*N$) $\to$ \only<4>{O($\emptyset*N$)}\phantom{$\emptyset$}
+    \end{block}
+    \end{minipage}
+    \end{center}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Linearizing]{Dimensionality Reduction}
+\begin{frame}
+  \frametitle{}
+
+  \vfill
+  {\Large
+  \begin{center}
+    Optimization 3: Fudge ``unnecessary''\\
+    \vspace*{\baselineskip}
+    \pause
+    Only do part of the work and accept slightly different results if
+    there are huge cost savings.
+  \end{center}
+  }
+  \vfill
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Dimensionality Reduction}
+
+  %Basic rename detection rules:
+  %\only<2->{
+  %\begin{itemize}
+  %  \item If the same path exists in base and a side, those paths are
+  %        always assumed to be different versions of the same file.  (No
+  %        break detection is done.)
+  %  \only<3->{
+  %  \item If a path exists in base but not the side or vice versa, must
+  %        exhaustively look through all pairings for best match.
+  %  }
+  %\end{itemize}
+  %}
+
+  %\only<4->{
+    %\vspace*{-1.0\baselineskip}
+    \vfill
+    \begin{center}
+    \begin{minipage}{0.65\textwidth}
+    \begin{block}{\begin{center}Fun fact\end{center}}
+        Over 75\% of renames in the linux kernel repository do not change
+        the basename of the file, just the directory in which it is found.
+    \end{block}
+    \end{minipage}
+    \end{center}
+    \vfill
+  %}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Dimensionality Reduction}
+
+  \vspace*{-0.5\baselineskip}
+  Detecting renames...
+
+  \vspace*{-0.5\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l}
+      Files in Base  &  Files in given side \\
+      \hline
+        \only<1|handout:0>{\phantom{document.html}}%
+        \only<2->{document.html}
+      &
+        \only<2->{build.log}
+      \\
+
+        \only<2->{src/{\color{blue}        blue.css}}
+      &
+        \only<2->{document.html}
+      \\
+
+        \only<2->{src/{\color{mybrown}     brown.css}}
+      &
+        \only<2->{source/{\color{blue}     blue.css}}
+      \\
+
+        \only<2->{src/{\color{mygreen}     green.css}}
+      &
+        \only<2->{source/{\color{mybrown}  brown.css}}
+      \\
+
+        \only<2->{src/{\color{myred}       red.css}}
+      &
+        \only<2->{source/{\color{mygreen}  green.css}}
+      \\
+
+      &
+        \only<1|handout:0>{\phantom{source/{\color{orange}   orange.css}}}%
+        \only<2->{source/{\color{orange}   orange.css}}
+      \\
+
+      &
+        \only<2->{source/{\color{mypurple} purple.css}}
+      \\
+
+      &
+        \only<2->{source/{\color{myred}    red.css}}
+
+    \end{tabular}
+    }
+  \end{center}
+  \vspace*{-1.5\baselineskip}
+
+  \vspace*{\baselineskip}
+  For each pair of files, what percentage of lines are found in both?
+  \vspace*{-0.25\baselineskip}
+  \begin{center}
+    {\footnotesize
+    \begin{tabular}{l|l|l|l|l}
+          &
+            \only<1-2|handout:0>{\phantom{src/blue.css}}
+            \only<3->{src/{\color{blue}     blue.css}}
+          &
+            \only<1-2|handout:0>{\phantom{src/brown.css}}%
+            \only<3->{src/{\color{mybrown}  brown.css}}
+          &
+            \only<1-2|handout:0>{\phantom{src/green.css}}%
+            \only<3->{src/{\color{mygreen}  green.css}}
+          &
+            \only<1-2|handout:0>{\phantom{src/red.css}}%
+            \only<3->{src/{\color{myred}    red.css}}
+          \\
+
+      \hline
+
+      \only<3->{build.log}           &&&& \\
+      \only<3->{source/{\color{blue}     blue.css}}    &&&& \\
+      \only<3->{source/{\color{mybrown}  brown.css}}   &&&& \\
+      \only<3->{source/{\color{mygreen}  green.css}}   &&&& \\
+      \only<1-2|handout:0>{\phantom{source/orange.css}}%
+      \only<3->{source/{\color{orange}   orange.css}}  &&&& \\
+      \only<3->{source/{\color{mypurple} purple.css}}  &&&& \\
+      \only<3->{source/{\color{myred}    red.css}}     &&&& \\
+
+
+    \end{tabular}
+    }
+  \end{center}
+  \only<4| handout:1>{
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[draw,ellipse,rotate=10,color=cyan] at (7.7, 1.6)
+           {Matrix of similarity percentages};
+    \end{tikzpicture}
+  }
+  \only<5| handout:1>{
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[draw,ellipse,rotate=10,color=cyan] at (7.7, 1.7)
+           {Sparse similarity percentages};
+    \end{tikzpicture}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Dimensionality Reduction}
+
+  %Basic rename detection rules:
+  %\begin{itemize}
+  %  \item If the same path exists in base and a side, those paths are
+  %        always assumed to be different versions of the same file.  (No
+  %        break detection is done.)
+  %  \only<2->{{\color{mygreen}
+  %  \item If unique basename matches are found, compare the contents.
+  %        If their similarity exceeds the rename threshold treat them
+  %        as a rename without looking for a ``better''
+  %        match.  Otherwise...
+  %  }}
+  %  \item If a path exists in base but not the side or vice versa, must
+  %        exhaustively look through all pairings for best match.
+  %\end{itemize}
+
+  %\only<3->{
+
+    \vspace*{3\baselineskip}
+    \begin{center}
+    \begin{minipage}{0.5\textwidth}
+    \begin{block}{\begin{center}Improvement\end{center}}
+        \quad
+        O($M*N$) $\to$ O((M-B)*(N-B) \only<1>{\phantom{+ B}}\only<2->{+ B})
+    \end{block}
+    \end{minipage}
+    \end{center}
+
+    \only<3>{
+    \vspace*{1\baselineskip}
+    \begin{center}
+    \begin{minipage}{0.5\textwidth}
+    \begin{block}{\begin{center}If enough matching basenames...\end{center}}
+        \quad
+        O($M*N$) $\to$ O(minimum($M,N$))
+    \end{block}
+    \end{minipage}
+    \end{center}
+    }
+  %}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Remembering]{Remembering previous work}
+\begin{frame}
+  \frametitle{}
+
+  \vfill
+  {\Large
+  \begin{center}
+    Optimization 4: Don't redo unnecessary work\\
+    \vspace*{\baselineskip}
+    \pause
+    When repeatedly merging, re-use\\ previous rename detection results.
+  \end{center}
+  }
+  \vfill
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Remembering previous work}
+
+  \qquad
+  \begin{minipage}{0.5\textwidth}
+    \begin{block}{
+        \only<1   |handout:0>{Cherry-picking C..feature}
+        \only<2-6 |handout:1>{Picking F}
+        \only<7   |handout:0>{Picked F}
+        \only<8-15|handout:2>{Picking G}
+        %\only<16  |handout:0>{Picked G}
+        %\only<17- |handout:0>{Cherry picking complete}
+        \phantom{Cg}% To make sure all titles have the same height
+        }
+      \begin{tikzpicture}[node distance=10mm]
+        \only<1->{
+          \node[commit] (A) {A};
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (E)  [right of=D] {E};
+          \node[commit] (C)  [below right of=A,yshift=-1em] {C};
+          \node[commit] (F)  [right of=C] {F};
+          \node[commit] (G)  [right of=F] {G};
+        }
+        \only<3-9|handout:2>{
+          \node[orphanCommit] (A)  {A};
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (G)  [right of=F] {G};
+        }
+        \only<1->{
+          \path[prnt] (E) edge (D);
+          \path[prnt] (D) edge (B);
+          \path[prnt] (B) edge (A);
+
+          \path[prnt] (G) edge (F);
+          \path[prnt] (F) edge (C);
+          \path[prnt] (C) edge (A);
+
+          \node[ref]  (f) [below of=G] {feature};
+          \path[bptr] (f) edge (G);
+          \node[ref]  (m) [above of=E] {master};
+        }
+
+        %\only<1-16| handout:1-2>{
+        \only<1-15| handout:1-2>{
+          \path[bptr] (m) edge (E);
+          %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
+          %\path[bptr] (h) edge (m);
+        }
+        \only<6|handout:1>{
+          \node[redCommit] (FS) [right of=E, xshift=0.1em] {F$^*$};
+          \path[oprnt] (FS) edge[bend left] (F);
+        }
+        \only<6->{
+          \path[prnt] (FS) edge (E);
+        }
+        \only<7-| handout:2>{
+          \node[commit] (A) {A};
+          \node[commit] (B)  [right of=A] {B};
+          \node[commit] (D)  [right of=B] {D};
+          \node[commit] (FS) [right of=E, xshift=0.1em] {F$^*$};
+          \node[commit] (F)  [right of=C] {F};
+          \node[commit] (G)  [right of=F] {G};
+        }
+        \only<9-15| handout:2>{
+          \node[orphanCommit] (A) {A};
+          \node[orphanCommit] (B)  [right of=A] {B};
+          \node[orphanCommit] (D)  [right of=B] {D};
+          \node[orphanCommit] (E)  [right of=D] {E};
+          \node[orphanCommit] (C)  [below right of=A,yshift=-1em] {C};
+        }
+        \only<15|handout:2>{
+          \node[redCommit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
+          \path[oprnt] (GS) edge[bend left] (G);
+        }
+        %\only<16-|handout:0>{
+        %  \node[commit] (GS) [right of=FS, xshift=0.3em] {G$^*$};
+        %}
+        \only<15-| handout:2>{
+          \path[prnt] (GS) edge (FS);
+        }
+        %\only<17-| handout:0>{
+        %  \path[bptr] (m) edge[bend left] (GS);
+        %  %\node[ref]    (h)  [left of=m,xshift=-1.8em] {HEAD};
+        %  %\path[bptr] (h) edge (m);
+        %}
+      \end{tikzpicture}
+    \end{block}
+  \end{minipage}%
+  \only<7-|handout:2>{%
+  \hfill
+  \begin{minipage}{0.32\textwidth}
+    \begin{block}{}
+      $
+      \begin{array}{ll}
+        \multicolumn{2}{c}{\textrm{buccaneer.c}\Rightarrow\textrm{viking.c}} \\
+        C: & \texttt{c0a575} \\
+        E: & \texttt{b1ade5} \\
+        F: & \texttt{befa11} \\
+        \hline
+        F^*\!\!: & \texttt{1007ed}
+      \end{array}
+      $
+    \end{block}
+  \end{minipage}
+  \hfill
+  }
+
+  \vspace*{-\baselineskip}
+  \only<4-7|handout:1>{
+    \vfill
+    \begin{center}
+    \begin{minipage}{0.88\textwidth}
+    \begin{block}{}
+      $
+      \left\lbrace
+      \begin{array}{lll}
+           & \textrm{buccaneer.c} & \textrm{viking.c} \\
+        C: & \texttt{c0a575}      & \texttt{000000}   \\
+        E: & \texttt{000000}      & \texttt{b1ade5}   \\
+        F: & \texttt{befa11}      & \texttt{000000}
+      \end{array}
+      \right\rbrace \only<5->{\to \left\lbrace
+      \begin{array}{ll}
+        \multicolumn{2}{c}{\textrm{buccaneer.c}\Rightarrow\textrm{viking.c}} \\
+        C: & \texttt{c0a575} \\
+        E: & \texttt{b1ade5} \\
+        F: & \texttt{befa11}
+      \end{array}\right\rbrace
+      }
+      $
+
+      \only<4-5|handout:0>{
+        \phantom{$F^*$}
+      }
+      \only<6-7>{
+        \hspace*{16.4em} $F^*:$ \;\;\,\texttt{1007ed}
+      }
+    \end{block}
+    \end{minipage}
+    \end{center}
+    \vfill
+  }
+  \only<10-|handout:2>{
+    \vfill
+    \begin{center}
+    \begin{minipage}{0.88\textwidth}
+    \begin{block}{}
+      $
+      \left\lbrace
+      \begin{array}{lll}
+             & \textrm{buccaneer.c} & \textrm{viking.c} \\
+        F:   & \texttt{befa11}      & \texttt{000000}   \\
+        F^*: & \texttt{000000}      & \texttt{1007ed}   \\
+        G:   & \texttt{a70115}      & \texttt{000000}
+      \end{array}
+      \right\rbrace \only<13->{\to \left\lbrace
+      \begin{array}{ll}
+        \multicolumn{2}{c}{\textrm{buccaneer.c}\Rightarrow\textrm{viking.c}} \\
+        F:   & \texttt{befa11}  \\
+        F^*: & \texttt{1007ed}  \\
+        G:   & \texttt{a70115}
+      \end{array}\right\rbrace
+      }$
+
+      \only<10-13|handout:0>{
+        \phantom{$G^*$}
+      }
+      \only<14->{
+      \hspace*{17.0em} $G^*:$ \;\;\,\texttt{fab1ed}
+      }
+    \end{block}
+    \end{minipage}
+    \end{center}
+    \vfill
+  }
+  \only<11-13|handout:2>{
+    \begin{tikzpicture}[remember picture,overlay]
+       \draw[mygreen,line width=1pt] (2.93, 2.11) ellipse (2.5em and 0.5em);
+       \draw[orange, line width=1pt] (5.06, 1.64) ellipse (2.5em and 0.5em);
+       \only<12-13>{
+       \draw[mygreen,line width=1pt] (9.39, 4.97) ellipse (2.5em and 0.5em);
+       \draw[orange, line width=1pt] (9.39, 4.47) ellipse (2.5em and 0.5em);
+       }
+    \end{tikzpicture}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection[Honing]{But wait, there's more!}
+\begin{frame}
+  \frametitle{But wait, there's more!}
+
+  \begin{itemize}
+
+    \item Avoid accidentally quadratic behavior
+
+    \item Restructure to eliminate quasi-quadratic index insertion and
+          removal
+
+    \item Fewer tree traversals
+
+    \item Extend ``partial capitulation'' ideas from \textit{file}
+          renames to \textit{directory} renames
+
+      %\begin{itemize}
+      %  \item More caveats involved, but...
+      %  \item Also enables partial tree traversal elimination
+      %\end{itemize}
+
+    \item Avoid updating the index or working tree if not needed
+
+      \begin{itemize}
+        \item Helps with new \only<1>{sparse-checkout}\only<2->{{\color{mygreen}sparse-checkout}} command
+        \item Accelerates rebases and cherry-picks
+        \item \only<1-2>{Avoids unnecessary recompilation}%
+              \only<3>{{\color{mygreen}Avoids unnecessary recompilation}} after a rebase
+      \end{itemize}
+
+    \item ...and a few other minor improvements
+      % * avoid re-comparing hashes (unpack_trees did it once, then we repeated)
+      % * memoize not-found results from previous runs of check_dir_renamed()
+      %   (store dir_renames + non-renames in a strmap)
+
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Results]{Results}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Testcase}
+
+  \begin{itemize}[<+->]
+     \item Linux kernel
+
+     \item Rebase or cherry-pick hwmon-updates (35 patches) from 5.5 $\to$ 5.4
+
+     \item Very few renames involved; only takes 50\% of execution time
+
+     \item Speedup factor of 3 (optimized more things than renames)
+
+     \item What if we checkout 5.4, and rename \texttt{drivers/}
+           $\Rightarrow$ \texttt{pilots/}, and then rebase or cherry-pick
+           those 35 patches on top ?
+
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Results}
+
+  %Linux kernel, backport hwmon-updates from 5.5 to 5.4-ish.
+  \vfill
+  \begin{center}
+    %In Progress\\[2em]
+
+    %https://github.com/newren/git/tree/ort
+
+    \includegraphics[scale=0.5]{timing.pdf}
+  \end{center}
+  \vfill
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Results}
+
+  \vfill
+  \begin{center}
+  Reproduce these numbers:\\[2\baselineskip]
+
+  https://github.com/newren/git/blob/git-merge-2020-demo/README.md
+  \end{center}
+  \vfill
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{The journey, redux}
+
+  \vspace*{-0.5\baselineskip}
+  \begin{minipage}{0.88\textwidth}
+  \begin{block}{Issues starting the journey}
+    {\footnotesize
+    \begin{itemize}
+      \item cherry-pick would fail to detect renames and fail to notify
+            about needed merge.renameLimit
+      \item cherry-pick would ignore merge.renameLimit > 32767
+      \item if directory renames involved, files would be left in wrong
+            directory
+      \item people wrote custom purpose scripts to cherry-pick things
+      \item after fixing merge.renameLimit, cherry-picking small patches
+            would take more than 9 minutes.
+    \end{itemize}
+    }
+  \end{block}
+  \end{minipage}
+
+  \vspace*{\baselineskip}
+  {\small
+  \only<2->{
+    When I told folks a few years ago that "You don't need these
+    special scripts to cherry pick things; just set merge.renameLimit
+    to something higher," they responded that merge.renameLimit didn't
+    work.\\[1em]
+
+    \only<3->{I didn't believe them.\\[1em]}
+
+    \only<4>{My efforts in this area, including this performance work,
+      represent my attempt to continue to not believe them.  :-)}
+  }}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\end{document}
