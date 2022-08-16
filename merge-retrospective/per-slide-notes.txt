@@ -1,0 +1,183 @@
+Advantage: Correctness
+  * 34 is 2 higher than when we switched the default
+
+Advantage: Performance
+  * Multiple testcases...<describe them>
+  * Factors don't match previously published numbers becasue different laptop
+  * I will use the "Geometric mean speedup" across these three testcases in
+    multiple places in later slides
+  * Even with *none* of the optimizations discussed later, the new merge
+    backend was over 20% faster just due to improved data structures
+    and traditional optimizations.
+
+Advantage: New --remerge-diff feature
+  * Output is usually empty, because merges usually don't have conflicts to
+    resolve and people usually don't stuff extra changes in.  But when they
+    do, it's really nice to be able to see them.
+
+Advantage: New AUTO_MERGE feature
+  * Currently only documented in a presentation given at a conference called
+    "Git Merge 2022".
+  * If anyone wants to contribute to Git, documenting this feature might be
+    a good first task
+
+Advantages: working with repository subsets
+  * Factor reduction in needed blobs for mega-renames case: 181.3
+  * sparse-index integration could be made even better; when we need to handle
+    conflicts, don't go full index but only relax sparsity as needed
+
+Advantages: More features in the pipeline
+  * `git merge-tree` and `git replay`, in particular
+
+Why renames are important
+  * "oops" because either both files miss changes in the other, or unknowingly
+    discarding changes from the other side of history
+
+How rename detection works
+  * Note that README.md, present on both sides, omitted from matrix
+  * Use matrix of similarity percentages to see which files are sufficiently
+    similar and then mark them as renames
+
+How it all began
+  * Note that deleted files and added files cannot be distinguished from
+    renames, so renameLimit needs to be bigger than number of renames
+
+Those custom "cherry-pick" scripts
+  * The set of patterns came from the dozens of high-ish level directory
+    renames.  Those renames weren't all done at once, so one had to be
+    careful which "directory renames" to apply based on when in history
+    you were cherry-picking from and when in history you were cherry-picking
+    to.
+  * The directory rename detection thing stumped me for a little while, in
+    part because the data structures in the `recursive` backend were
+    non-helpful, and there are a few layers to how optimally they can be
+    handled.  But the most straightforward (and least optimal) way of handling
+    those still allolws an impressive speed-up.
+
+Relevant renames optimization
+  * `git rebase` manual notes that rebase has multiple backends, one based on
+    shared code with `git cherry-pick`, and one based on `git am`.  The manual
+    includes a long list of differences in behavior between these backends.
+    Turns out this was _another_ difference between those backends that was
+    never documented (other than in a presentation given at a conference called
+    "Git Merge 2022").  But the difference has been fixed via using a new
+    merge backend.  :-)
+
+Correctly exploiting exact renames optimization
+  * Smallest optimization, but by far the simplest.  And it still sped things
+    up by a factor of more than 2.
+
+Noticing patterns
+  * "Oh, you want to rebase this commit over there?  Let's see if upstream has
+    any renames?  Yep, here are the 26 thousand renames that upstream did.
+    ...
+    Oh, you also want to rebase this commit over there?  Ok, let me find out
+    if upstream did any renames.  Yep, it turns out there are 26 thousand of
+    them.  Here they are.
+    ...
+    Oh, you also want to rebase this commit over there?  Ok, let me find out
+    if upstream did any renames.  Yep, it turns out there are 26 thousand of
+    them.  Here they are.
+    ...
+    etc."
+
+Caching renames during a rebase or cherry-pick
+  * People often suggest recording renames permanently somewhere.  I think
+    it is _either_ very difficult to do so safely, or potentially runs into
+    very expensive computations that cause this to be a de-optimization, or
+    forces us to drop the basic idea of a 3-way merge and instead write a
+    merge algorithm that inspects each individual commit along the history
+    in order to determine how to merge -- which itself scales poorly for
+    the very large repositories and goes down a path that others have explored
+    before and gave up on as a bad idea (e.g. Precise Codeville Merge).
+  * There is one tiny corner case where this yields different behavior,
+    discussed in the mentioned document, where it avoids an unnecessary
+    conflict.
+
+Rename comparison matrix sizes
+  * Unfortunately, 1x5285 is a lot more expensive than you'd expect, because
+    the initial translation of file contents into list of integers is
+    very expensive.  That's why the "no copy detection" optimization only
+    sped things up by a factor of 2.8 or so, despite lowering the sources by
+    a factor of 4.5.
+  
+Exploiting File Basenames
+  * There are funny files like '.gitignore' or 'Makefile' or 'build.gradle',
+    though, where there are more than one file with the same basename on each
+    side.  There's an obvious thing you can do with those, but it ruins
+    performance.  The solution I used is a bit non-obvious, but even if you
+    don't discover that solution, you'd still end up with a nice performance
+    win here.
+  * This is a major difference compared to before, for those that have
+    multiple valid possible rename pairings.  Turns out that GIT_BASENAME_FACTOR
+    is also only documented in one place -- on some slides at a conference
+    called "Git Merge 2022".  If anyone wants a simple way to contribute to
+    Git, documenting this environment variable might be a good first
+    contribution.
+  * However, this is not a difference between the `recursive` and `ort`
+    backends, because this change was embedded into the diff machinery.
+    Thus, this change was made for all rename detection in Git, the new
+    merge backend, the old merge backend, and even when just doing regular
+    diffs.
+ 
+Three-way merge, revisited
+  * If subtree matches between merge base and one of the sides, that means
+    every subdirectory and file under that subtree will match, and thus
+    that the correct merge resolution is the other tree.
+  * However, trivial directory resolution breaks rename detection, so we
+    have to somehow know that there aren't any "relevant" renames within
+    that directory.
+
+Trivial directory resolution
+  * I've hidden a crafty way these are used that really help this
+    optimization when there are relevant renames to worry about.  So you
+    wouldn't get this full optimization without that craftiness, but you'd
+    still see a nice speed-up.
+
+Performance Summary
+  * The second column is what factor of speed-up we'd see, if only that
+    optimization had been implemented and the others excluded.  The third
+    column is what factor of slow-down we'd see if we removed just that
+    optimization but left all the other ones in place.
+  * Remember, the numbers shown for the first table are the geometric mean
+    of speed-ups/slow-downs across the three testcases.  So, the overall
+    speedup of all optimizations is the geometric mean of the three numbers
+    in the fourth column of the second table, which is 865.4
+  * These optimization numbers are still not quite fully realized due to `git
+    rebase` and `git cherry-pick` using the new merge backend suboptimally
+    (writing out the index and working tree after each commit).
+  * Other surprising notes:
+    * Lots of needless O(N^2) code gets hidden when the overall algorithm is
+      quadratic
+    * Memory pools help a lot more than you'd expect
+    * There wasn't much point in doing optimizations that shaved of tens of
+      milliseconds when the job was between half a minute and an hour and
+      a half...but when it's subsecond, lots of little optimizations like
+      those can add up.
+
+Blog Posts
+  * Can either Google "Optimizing Git's Merge Machinery", or I'll ask someone
+    with a twitter account to post my slides after the talk and you can look
+    at these slides and click on the links.
+
+Thanks
+  * Other differences:
+    * myers vs. histogram diff
+  * Other oddities:
+    * big files are always similar, according to algorithm
+    * directories of similar files do really weird things
+  * Countering "pile of heuristics"
+    * There were 5 heuristics before
+      * same hash->same file
+      * multiple exact matches -> randomly choose one
+      * NUM_CANDIDATES_PER_DEST
+      * 107927: spanhash size
+      * "50%": magic factor
+    * We have one optimization-speed heuristic which doesn't affect output
+    * We have two cases, for relevant and cached renames, which have very
+      minor output differences.  I'd argue they _always_ provide better output,
+      especially since one brings us in line with `git am -3`, and arguing that
+      the other is a heuristic is as picky as arguing about
+      "same hash->same file" being not fully valid.
+    * We have one case where we have a dramatic new heuristic difference from
+      before, but it isn't a difference between modern `recursive` and `ort`.
