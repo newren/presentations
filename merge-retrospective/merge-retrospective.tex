@@ -146,43 +146,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
-  \frametitle{Advantage: Performance}
-
-  Performance:\\
-  \vspace*{0.5\baselineskip}
-  \only<1>{
-  \qquad
-  \begin{tabular}{l|r|c}
-    Testcase       & \multicolumn{1}{c|}{Old timing}
-                   & \multicolumn{1}{p{4.93em}}{New timing \phantom{foobar}} \\
-    \hline
-    few-renames:   &   18.934 s & .1892 s \\
-    mega-renames:  & 6424.660 s & .6573 s \\
-    just-one-mega: &  173.093 s & .2612 s
-  \end{tabular}
-  }
-  \only<2->{
-  \qquad
-  \begin{tabular}{l|r|c|r}
-    Testcase       & \multicolumn{1}{c|}{Old timing}
-                   & \multicolumn{1}{c|}{New timing}
-                   & \multicolumn{1}{p{4.4em}}{\centering Speed-up factor} \\
-    \hline
-    few-renames:   &   18.934 s & .1892 s &  100.1 \hspace*{0.3em} \\
-    mega-renames:  & 6424.660 s & .6573 s & 9774.3 \hspace*{0.3em} \\
-    just-one-mega: &  173.093 s & .2612 s &  662.7 \hspace*{0.3em}
-  \end{tabular}
-  }%
-  \only<3->{
-  \vspace*{\baselineskip}
-  \begin{center}Geometric mean speedup: 865.4\end{center}
-  }
-
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}
   \frametitle{Advantage: New {-}{-}remerge-diff feature}
 
   Sometimes you want to investigate the conflict resolution performed
@@ -260,6 +223,43 @@
     \item Replaying a thicket of branches, rather than just one
     \item Replaying merge commits and their ``hidden'' changes
   \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantage: Performance}
+
+  Performance:\\
+  \vspace*{0.5\baselineskip}
+  \only<1>{
+  \qquad
+  \begin{tabular}{l|r|c}
+    Testcase       & \multicolumn{1}{c|}{Old timing}
+                   & \multicolumn{1}{p{4.93em}}{New timing \phantom{foobar}} \\
+    \hline
+    few-renames:   &   18.934 s & .1892 s \\
+    mega-renames:  & 6424.660 s & .6573 s \\
+    just-one-mega: &  173.093 s & .2612 s
+  \end{tabular}
+  }
+  \only<2->{
+  \qquad
+  \begin{tabular}{l|r|c|r}
+    Testcase       & \multicolumn{1}{c|}{Old timing}
+                   & \multicolumn{1}{c|}{New timing}
+                   & \multicolumn{1}{p{4.4em}}{\centering Speed-up factor} \\
+    \hline
+    few-renames:   &   18.934 s & .1892 s &  100.1 \hspace*{0.3em} \\
+    mega-renames:  & 6424.660 s & .6573 s & 9774.3 \hspace*{0.3em} \\
+    just-one-mega: &  173.093 s & .2612 s &  662.7 \hspace*{0.3em}
+  \end{tabular}
+  }%
+  \only<3->{
+  \vspace*{\baselineskip}
+  \begin{center}Average speedup factor (geometric mean): 865.4\end{center}
+  }
 
 \end{frame}
 
