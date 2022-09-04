@@ -1,15 +1,3 @@
-Advantage: Correctness
-  * 34 is 2 higher than when we switched the default
-
-Advantage: Performance
-  * Multiple testcases...<describe them>
-  * Factors don't match previously published numbers becasue different laptop
-  * I will use the "Geometric mean speedup" across these three testcases in
-    multiple places in later slides
-  * Even with *none* of the optimizations discussed later, the new merge
-    backend was over 20% faster just due to improved data structures
-    and traditional optimizations.
-
 Advantage: New --remerge-diff feature
   * Output is usually empty, because merges usually don't have conflicts to
     resolve and people usually don't stuff extra changes in.  But when they
@@ -28,6 +16,18 @@ Advantages: working with repository subsets
 
 Advantages: More features in the pipeline
   * `git merge-tree` and `git replay`, in particular
+
+Advantage: Correctness
+  * 34 is 2 higher than when we switched the default
+
+Advantage: Performance
+  * Multiple testcases...<describe them>
+  * Factors don't match previously published numbers becasue different laptop
+  * I will use the "Geometric mean speedup" across these three testcases in
+    multiple places in later slides
+  * Even with *none* of the optimizations discussed later, the new merge
+    backend was over 20% faster just due to improved data structures
+    and traditional optimizations.
 
 Why renames are important
   * "oops" because either both files miss changes in the other, or unknowingly

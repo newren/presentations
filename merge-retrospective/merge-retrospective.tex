@@ -38,7 +38,7 @@
 }
 
 %\title{(Git Merge)$²$}
-\title{(Git Merge)$^2$}
+\title{Git Merge}
 
 \author{Elijah Newren}
 \institute{Palantir Technologies}
@@ -57,8 +57,20 @@
   \titlepage
 \end{frame}
 
+\ifx\handout\undefined
+\title{(Git Merge)$^2$}
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\title{New Merge Backend -- Why, How, What}
+\begin{frame}
+  \titlepage
+\end{frame}
+\fi
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{New Merge Backend}
+\section[Background]{New Merge Backend background}
 \subsection{Scope}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -129,143 +141,7 @@
 \end{comment}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Advantages}
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}
-  \frametitle{Advantage: Correctness}
-
-  Correctness:
-  \begin{itemize}
-    \item 34 tests that succeed with the new backend, but fail with the old one
-    \item \hspace*{0.5em}0 tests that fail with the new backend, but succeed with the old one
-  \end{itemize}
-
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}
-  \frametitle{Advantage: New {-}{-}remerge-diff feature}
-
-  Sometimes you want to investigate the conflict resolution performed
-  for a merge, including whether unrelated changes were included:\\
-  \vspace*{\baselineskip}
-  \qquad\cl{git show {-}{-}remerge-diff ...}\\
-  or\\
-  \qquad\cl{git log {-}{-}remerge-diff ...}
-
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}[fragile]
-  \frametitle{Advantage: New AUTO\_MERGE feature}
-
-  Sometimes you want to investigate the conflict resolution you have
-  done so far for a merge, including any unrelated changes:\\
-  \vspace*{\baselineskip}
-  \qquad\cl{git diff AUTO\_MERGE}
-
-  \begin{comment}
-  ALTERNATE:
-
-  There are a variety of questions users might ask while resolving
-  conflicts:
-  \vspace*{-\baselineskip}
-  \begin{enumerate}
-    \item What changes have been made since the previous (first) parent?
-    \item What changes are staged?
-    \item What is still unstaged? (or what is still conflicted?)
-    \item What changes did I make to resolve conflicts so far?
-  \end{enumerate}
-
-  \vspace*{\baselineskip}
-  The first three of these have simple answers:
-  \begin{enumerate}
-    \item \texttt{git diff HEAD}
-    \item \texttt{git diff {-}{-}cached}
-    \item \texttt{git diff}
-  \end{enumerate}
-
-  Due to the new merge strategy, the fourth now has an answer too:
-  \begin{enumerate}[4]
-    \item \texttt{git diff AUTO\_MERGE}
-  \end{enumerate}
-  \end{comment}
-
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}
-  \frametitle{Advantages: working with repository subsets}
-
-  The new merge backend is vital to the efforts for working with
-  repository subsets in Git.
-  \begin{itemize}
-    \item sparse-checkout: avoid needless vivifying
-    \item sparse-index: ability to work without full index
-    \item partial clone: massive reduction in blobs needed
-  \end{itemize}
-
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}
-  \frametitle{Advantages: More features in the pipeline}
-
-  \begin{itemize}
-    \item Server side operations
-    \item Merge/Rebase/Cherry-pick/Revert on branches other than HEAD
-    \item Replaying commits with less worktree dirtying
-    \item Replaying a thicket of branches, rather than just one
-    \item Replaying merge commits and their ``hidden'' changes
-  \end{itemize}
-
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\begin{frame}
-  \frametitle{Advantage: Performance}
-
-  Performance:\\
-  \vspace*{0.5\baselineskip}
-  \only<1>{
-  \qquad
-  \begin{tabular}{l|r|c}
-    Testcase       & \multicolumn{1}{c|}{Old timing}
-                   & \multicolumn{1}{p{4.93em}}{New timing \phantom{foobar}} \\
-    \hline
-    few-renames:   &   18.934 s & .1892 s \\
-    mega-renames:  & 6424.660 s & .6573 s \\
-    just-one-mega: &  173.093 s & .2612 s
-  \end{tabular}
-  }
-  \only<2->{
-  \qquad
-  \begin{tabular}{l|r|c|r}
-    Testcase       & \multicolumn{1}{c|}{Old timing}
-                   & \multicolumn{1}{c|}{New timing}
-                   & \multicolumn{1}{p{4.4em}}{\centering Speed-up factor} \\
-    \hline
-    few-renames:   &   18.934 s & .1892 s &  100.1 \hspace*{0.3em} \\
-    mega-renames:  & 6424.660 s & .6573 s & 9774.3 \hspace*{0.3em} \\
-    just-one-mega: &  173.093 s & .2612 s &  662.7 \hspace*{0.3em}
-  \end{tabular}
-  }%
-  \only<3->{
-  \vspace*{\baselineskip}
-  \begin{center}Average speedup factor (geometric mean): 865.4\end{center}
-  }
-
-\end{frame}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Background}
-\subsection{3-way Merge}
+\subsection{Three-way merge}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
@@ -352,11 +228,11 @@
     \only<5|handout:0>{{\color{mygreen}explore\_sea(me.love[0]);}}%
     \only<6|handout:0>{{\color{mygreen}explore\_sea(aye, matey);}}%
     \only<7>{{\color{mygreen}
-    <{}<{}<{}<{}<{}<{}< HEAD  \\
+    <{}<{}<{}<{}<{}<{}< Side1  \\
     \quad{}explore\_sea(aye, matey); \\
     \quad{}=======\\
     \quad{}explore\_sea(me.love[0]); \\
-    \quad{}>{}>{}>{}>{}>{}>{}> branchB
+    \quad{}>{}>{}>{}>{}>{}>{}> Side2
     }}
     \\
     \quad{}shiver(me.timbers);\\
@@ -368,7 +244,209 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{Rename Basics}
+\section{Advantages}
+\subsection{{-}{-}remerge-diff}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantage: New {-}{-}remerge-diff feature}
+
+  Sometimes you want to investigate the conflict resolution performed
+  for a merge, including whether unrelated changes were included:\\
+  \vspace*{0.5\baselineskip}
+  \qquad\cl{git show {-}{-}remerge-diff me\_commit}\\
+  or\\
+  \qquad\cl{git log {-}{-}remerge-diff me\_branch}\
+
+  \only<2>{
+  {\scriptsize
+  \vspace*{\baselineskip}
+    \quad{}diff {-}{-}git a/filename b/filename \\
+    \quad{}remerge CONFLICT (content): Merge conflict in filename \\
+    \quad{}index ba771ed..57abbed 100644 \\
+    \quad{}{-}{-}{-} a/filename \\
+    \quad{}{-}{-}{-} b/filename \\
+    \quad{}@@ -106,7 +106,3 @@ \\
+    \quad{}speak\_like\_a\_pirate(arrrgs); \\
+  {\color{myred}
+    \quad{}-<{}<{}<{}<{}<{}<{}< Side1  \\
+    \quad{}-explore\_sea(aye, matey); \\
+    \quad{}-=======\\
+    \quad{}-explore\_sea(me.love[0]); \\
+    \quad{}->{}>{}>{}>{}>{}>{}> Side2 \\
+  }{\color{mygreen}
+    \quad{}+explore\_sea(aye, tis, me.love[0]); \\
+  }
+    \quad{}shiver(me.timbers);
+  }}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{AUTO\_MERGE}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}[fragile]
+  \frametitle{Advantage: New AUTO\_MERGE feature}
+
+  Sometimes you want to investigate the conflict resolution you have
+  done so far for a merge, including any unrelated changes:\\
+  \vspace*{\baselineskip}
+  \qquad\cl{git diff AUTO\_MERGE}
+
+  \only<2>{
+  {\scriptsize
+  \vspace*{4.1\baselineskip}
+    \quad{}diff {-}{-}git a/filename b/filename \\
+    \quad{}index ba771ed..57abbed 100644 \\
+    \quad{}{-}{-}{-} a/filename \\
+    \quad{}{-}{-}{-} b/filename \\
+    \quad{}@@ -106,7 +106,3 @@ \\
+    \quad{}speak\_like\_a\_pirate(arrrgs); \\
+  {\color{myred}
+    \quad{}-<{}<{}<{}<{}<{}<{}< Side1  \\
+    \quad{}-explore\_sea(aye, matey); \\
+    \quad{}-=======\\
+    \quad{}-explore\_sea(me.love[0]); \\
+    \quad{}->{}>{}>{}>{}>{}>{}> Side2 \\
+  }{\color{mygreen}
+    \quad{}+explore\_sea(aye, tis, me.love[0]); \\
+  }
+    \quad{}shiver(me.timbers);
+  }}
+
+  \begin{comment}
+  ALTERNATE:
+
+  There are a variety of questions users might ask while resolving
+  conflicts:
+  \vspace*{-\baselineskip}
+  \begin{enumerate}
+    \item What changes have been made since the previous (first) parent?
+    \item What changes are staged?
+    \item What is still unstaged? (or what is still conflicted?)
+    \item What changes did I make to resolve conflicts so far?
+  \end{enumerate}
+
+  \vspace*{\baselineskip}
+  The first three of these have simple answers:
+  \begin{enumerate}
+    \item \texttt{git diff HEAD}
+    \item \texttt{git diff {-}{-}cached}
+    \item \texttt{git diff}
+  \end{enumerate}
+
+  Due to the new merge strategy, the fourth now has an answer too:
+  \begin{enumerate}[4]
+    \item \texttt{git diff AUTO\_MERGE}
+  \end{enumerate}
+  \end{comment}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection[subsetting]{Repository subsets}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantages: working with repository subsets}
+
+  The new merge backend is vital to the efforts for working with
+  repository subsets in Git.
+  \begin{itemize}
+    \item sparse-checkout: avoid needless vivifying
+    \item sparse-index: ability to work without full index
+    \item partial clone: massive reduction in blobs needed
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection[...]{More features coming}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantages: More features in the pipeline}
+
+  \begin{itemize}
+    \item Server side operations
+    \item Merging/Rebasing/etc. changes disconnected from HEAD
+    \item Replaying commits with less worktree dirtying
+    \item Replaying merge commits and their ``hidden'' changes
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection[Fixes]{Correctness}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantage: Correctness}
+
+  Correctness:
+  \begin{itemize}
+    \item 34 tests that succeed with the new backend, but fail with the old one
+    \item \hspace*{0.5em}0 tests that fail with the new backend, but succeed with the old one
+  \end{itemize}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection[Perf]{Performance}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
+  \frametitle{Advantage: Performance}
+
+  Performance:\\
+  \vspace*{0.5\baselineskip}
+  \only<1>{
+  \qquad
+  \begin{tabular}{l|r|c}%{l|r|c}
+    Testcase       & \multicolumn{1}{c|}{Old timing}
+                     %\multicolumn{1}{p{4.57em}}{Old timing \phantom{foobar}} \\
+                   & \multicolumn{1}{p{4.93em}}{New timing \phantom{foobar}} \\
+    \hline
+    few-renames:   &   18.934 s & \\%& .1892 s \\
+    mega-renames:  & 6424.660 s & \\%& .6573 s \\
+    just-one-mega: &  173.093 s & \\%& .2612 s
+  \end{tabular}
+  }
+  \only<2->{
+  \qquad
+  \begin{tabular}{l|r|c|c}
+    Testcase       & \multicolumn{1}{c|}{Old timing}
+                   & \multicolumn{1}{c|}{New timing}
+                   & \multicolumn{1}{p{4.4em}}{\centering Speed-up factor} \\
+    \hline
+    few-renames:   &   18.934 s &
+                   %& .1892 s
+                   %&  100.1 \hspace*{0.3em} \\
+                   & x \\
+    mega-renames:  & 6424.660 s &
+                   %& .6573 s
+                   %& 9774.3 \hspace*{0.3em} \\
+                   & y \\
+    just-one-mega: &  173.093 s &
+                   %& .2612 s
+                   %&  662.7 \hspace*{0.3em}
+                   & z
+  \end{tabular}
+  }%
+  \only<3->{
+  \vspace*{\baselineskip}
+  \begin{center}Average speedup factor (geometric mean):
+         %865.4
+         $(x*y*z)^\frac{1}{3}$
+  \end{center}
+  }
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Discovery]{Discovering Optimizations}
+\subsection[]{Background}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
@@ -460,7 +538,7 @@
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{The Journey Begins}
+\subsection[]{The Journey Begins}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
@@ -469,23 +547,36 @@
   In a repository with tens of thousands of renames (due to dozens of
   high-ish level directory renames):
 
-  \begin{itemize}[<+(1)->]
-    \item cherry-pick would fail to detect renames and fail to notify
-          about needed merge.renameLimit
-    \item cherry-pick would ignore merge.renameLimit > 32767
-    \item if directory renames involved, files would be left in wrong
-          directory
-    \item \only<1-6>{people wrote custom scripts to cherry-pick commits}
-          \only<7->{\textcolor{red}{people wrote custom scripts to
-                    cherry-pick commits}}
-    \item after fixing merge.renameLimit, cherry-picking small patches
-          would take more than 9 minutes.
+  \pause
+  {\textcolor{red}{
+  \begin{center}
+    people wrote custom scripts to simulate cherry-picking a commit
+  \end{center}
+  }}
+
+  \only<3->{
+  \vspace*{\baselineskip}
+  Because:
+  \begin{itemize}[<+(2)->]
+    \item There were silent caps on \texttt{merge.renameLimit} (since fixed)
+    \item \texttt{git cherry-pick} with small patches took more than 9 minutes
   \end{itemize}
+  }
 
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Discovering Optimizations}
+
+\begin{frame}
+  \vfill
+  \vspace*{2\baselineskip}
+  {\Huge
+  \begin{center}Oversimplifications coming...\end{center}
+  }
+  \vfill
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection[Relevance]{Relevant Renames}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -580,23 +671,24 @@
   \vspace*{\baselineskip}
   \begin{tabular}{lr}
     Speed-up factor if only this optimization included:  & 75.8 \\
-    Slow-down factor if only this optimization excluded: & 4.9
+    %Slow-down factor if only this optimization excluded: & 4.9
   \end{tabular}
 
   \vspace*{2\baselineskip}
   \pause
   {\scriptsize
-  Notes:
+  Behavioral Change: Very Minor \& Battle Tested for over a Decade
+  \pause
   \begin{itemize}
-    \item \texttt{git am -3} effectively embeds the naive form of this
-          optimization due to its build\_fake\_ancestor() function
+    \item If there are multiple valid rename pairings (multiple files that
+          are very similar on each side of history), excluding some source
+          files can cause other source files to be paired differently.
+    \pause
+    \item \texttt{git am -3} effectively embeds a naive form of this
+          optimization through its algorithm of ``building fake
+          ancestors''
           \pause
-          (which is incompatible with directory rename detection)
-          \pause
-    \item If there are multiple valid rename pairings, excluding some source
-          files can cause other source files to be paired differently.  (In
-          particular, it causes them to pair the same way as
-          \texttt{git am -3} pairs them.)\\
+          (and is incompatible with directory rename detection) \\
           \pause
           \vspace*{\baselineskip}
           \only<6>{
@@ -630,8 +722,10 @@
   \frametitle{Source code gems}
 
   Git stores hashes of individual files and trees (and commits), so:
+  \pause
   \begin{itemize}
-    \item If two files have the same hash, treat them as an exact rename.
+    \item If two files have the same hash, treat them as an exact rename and
+          remove them from the similarity percentages matrix
   \end{itemize}
 
   \pause
@@ -674,8 +768,14 @@
   \vspace*{\baselineskip}
   \begin{tabular}{lr}
     Speed-up factor if only this optimization included:  & 2.83 \\
-    Slow-down factor if only this optimization excluded: & 1.02
+    %Slow-down factor if only this optimization excluded: & 1.02
   \end{tabular}
+
+  \vspace*{2\baselineskip}
+  \pause
+  {\scriptsize
+  Behavioral Change: None
+  }
 
 \end{frame}
 
@@ -736,13 +836,19 @@
   \vspace*{\baselineskip}
   \begin{tabular}{lr}
     Speed-up factor if only this optimization included:  & 5.5 \\
-    Slow-down factor if only this optimization excluded: & 1.7
+    %Slow-down factor if only this optimization excluded: & 1.7
   \end{tabular}
+
+  \vspace*{2\baselineskip}
+  \pause
+  {\scriptsize
+  Behavioral Change: Extraordinarily Minor \& Always No Worse
+  }
 
   \pause
   \vspace*{2\baselineskip}
   {\scriptsize
-  Notes:
+  Other notes:
   \begin{itemize}[<+(1)->]
     \item Simple idea, very complex to show it is safe;
           see \texttt{Documentation/technical/remembering-renames.txt} in
@@ -782,20 +888,73 @@
     After relevance optimization: &   \hspace*{1.75em}1 x  5285
   \end{tabular}
 
-  \pause
-  \vspace*{\baselineskip}
-  What is that one file?
+  \only<3-6>{
+  \vspace*{1.5\baselineskip}
+  Can we identify likely rename pairs, without doing full similarity
+  comparisons?
+  \begin{center}
+    {\footnotesize
+    \only<3>{
+      \begin{tabular}{l|l|l|l|l|l}
+                     & corrupt.js & divine.js & dull.js & grand.js & lame.js \\
+        \hline
+        archery.js   &&&&& \\
+        baseball.js  &&&&& \\
+        build.log    &&&&& \\
+        football.js  &&&&& \\
+        golf.js      &&&&& \\
+        running.js   &&&&&
+      \end{tabular}
+    }
+    \only<4-5>{
+      \begin{tabular}{l|l|l|l|l}
+               & src/blue.css & src/brown.css & src/green.css & src/red.css \\
+        \hline
+        build.log         &&&& \\
+        source/blue.css   &&&& \\
+        source/brown.css  &&&& \\
+        source/green.css  &&&& \\
+        source/red.css    &&&& \\
+        template.txt      &&&& \\
+      \end{tabular}
+    }
+    \only<6>{
+      \begin{tabular}{l|l|l|l|l}
+                          & {src/\color{myblue}blue.css}
+                          & {src/\color{orange}orange.css}
+                          & {src/\color{mypurple}purple.css}
+                          & {src/\color{myred}red.css} \\
+        \hline
+        build.log                           &&&& \\
+        {source/\color{myblue}blue.css}     &&&& \\
+        {source/\color{orange}orange.css}   &&&& \\
+        {source/\color{mypurple}purple.css} &&&& \\
+        {source/\color{myred}red.css}       &&&& \\
+        template.txt                        &&&& \\
+      \end{tabular}
+    }
+    }
+  \end{center}
+  \only<3-4>{
+    \begin{tikzpicture}[remember picture, overlay]
+      \node[draw,ellipse,rotate=15,color=mygreen] at (7.2, 1.5)
+           {Matrix of similarity percentages};
+    \end{tikzpicture}
+  }
+  }
 
-  \pause
-  \vspace*{\baselineskip}
-  I have to compare \texttt{\textit{olddir}/modified-filename.ext} to
-  5285 files to find out it's a rename
-  of \texttt{\textit{newdir}/modified-filename.ext}?
+  \only<7->{
+  \vspace*{2\baselineskip}
+  I have to
+  compare \texttt{\textbf{\textit{olddir}}/{\color{mygreen}modified-filename.ext}}
+  to 5285 files to find out it's a rename
+  of \texttt{\textbf{\textit{newdir}}/{\color{mygreen}modified-filename.ext}}?
 
   \pause
   \vspace*{\baselineskip}
   Can I somehow use the fact that there is only
-  one \texttt{modified-filename.ext} on each side of history?
+  one \texttt{\color{mygreen}modified-filename.ext} on each side of history?
+  }
   
 \end{frame}
 
@@ -805,7 +964,7 @@
   \frametitle{Exploiting File Basenames}
 
   Percentage of historical renames that moved a file into a different
-  directory without changing its name:
+  directory without changing its basename:
   \pause
   \begin{itemize}
     \item linux: 76\%
@@ -817,8 +976,7 @@
   \pause
   \vspace*{\baselineskip}
   Idea: Check if files with same basename are similar, with higher
-  similarity threshold (controlled by \texttt{GIT\_BASENAME\_FACTOR}
-  environment variable).  If met, remove that pair from matrix.
+  similarity threshold.  If met, remove that pair from matrix.
 
 \end{frame}
 
@@ -831,8 +989,25 @@
   \vspace*{\baselineskip}
   \begin{tabular}{lr}
     Speed-up factor if only this optimization included:  & 5.8 \\
-    Slow-down factor if only this optimization excluded: & 2.0
+    %Slow-down factor if only this optimization excluded: & 2.0
   \end{tabular}
+
+  \vspace*{2\baselineskip}
+  \pause
+  {\scriptsize
+  Behavioral Change: Significant \& New
+  \pause
+  \begin{itemize}
+    \item Could result in different file pairings if multiple possible matches
+          (documented)
+    \pause
+    \item Controlled by (undocumented) \texttt{GIT\_BASENAME\_FACTOR}
+          environment variable
+    \pause
+    \item Not unique to new merge strategy; we made it apply to the old
+          strategy and to diffs as well.
+  \end{itemize}
+  }
 
 \end{frame}
 
@@ -854,16 +1029,15 @@
 \begin{frame}
   \frametitle{Three-way merge, revisited}
 
-  Git tracks hashes of commits, each subtree, and each file.
+  Git tracks hashes of commits, of each subtree, and of each file.
   Three-way merge can thus be explained as starting at the toplevel
-  tree and:
+  trees for each of the three commits and:
   
   \begin{enumerate}[<+(1)->]
-    \item Recurse into each subtree (for each of the three commits)
-    \item Get files from subtree
-    \item Match up the files 
-    \item Three-way merge matched files
-    \item Use resulting files to write new subtrees and toplevel tree
+    \item Recursively walking into each tree, gathering all files
+    \item Match up the files for three-way merges (using renames)
+    \item Do three-way content merge of matched files
+    \item Use the resulting files to write new subtrees and toplevel tree
   \end{enumerate}
 
   \pause
@@ -880,6 +1054,20 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{frame}
+  \frametitle{Unlocking trivial directory resolution}
+
+  Three key ideas:
+  \begin{enumerate}[<+(1)->]
+    \item If there are no renames, the optimization is safe.
+    \item If there are no \textit{relevant} renames, the optimization is safe
+    \item Defer recursing into potentially trivially resolvable directories
+  \end{enumerate}
+
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}
   \frametitle{Trivial directory resolution}
 
   Avoid recursing into subtrees where one side matches the merge base,
@@ -889,15 +1077,17 @@
   \vspace*{\baselineskip}
   \begin{tabular}{lr}
     Speed-up factor if only this optimization included[*]:  & 4.6 \\
-    Slow-down factor if only this optimization excluded: & 7.3
+    %Slow-down factor if only this optimization excluded: & 7.3
   \end{tabular}
 
-  \vspace*{\baselineskip}
+  \vspace*{2\baselineskip}
   {\scriptsize
-  [*]: This optimization fundamentally relies on the ``relevant
-  renames'' optimization, so I'm fudging here and using only the
-  necessary part of the ``relevant renames'' optimization needed for
-  this optimization.
+  \pause
+  Behavioral Change: No New changes
+  \begin{itemize}
+    \item [*] Relies on the ``Relevant Renames'' optimization, which does bring
+          along some changes (which were ``Very Minor \& Battle Tested'')
+  \end{itemize}
   }
 
 \end{frame}
@@ -910,26 +1100,37 @@
 \begin{frame}
   \frametitle{Performance Summmary}
 
+  \vspace*{-0.2\baselineskip}
   Overall results of individual optimizations:\\
   \pause
-  \vspace*{0.5\baselineskip}
+  \vspace*{0.4\baselineskip}
   \qquad
-  \begin{tabular}{l|r|r}
-    Optimization                    &
-      \multicolumn{1}{p{5.5em}}{\centering Sole-source Speed-up}  &
-      \multicolumn{1}{|p{5.5em}}{\centering Sole-source Slow-down} \\
+  \begin{tabular}{l|r}%{l|r|r}
+    Optimization
+      & \multicolumn{1}{p{5.5em}}{\centering Sole-source Speed-up}
+      %& \multicolumn{1}{|p{5.5em}}{\centering Sole-source Slow-down}
+      \\
     \hline
-    Relevant renames                & 75.85\hspace*{1.4em} & 4.90 \hspace*{1.4em} \\
-    No copy detection               &  2.83\hspace*{1.4em} & 1.02 \hspace*{1.4em} \\
-    Caching renames                 &  5.52\hspace*{1.4em} & 1.73 \hspace*{1.4em} \\
-    Basename-guided detection       &  5.83\hspace*{1.4em} & 2.01 \hspace*{1.4em} \\
-    Trivial directory resolution[*] &  4.64\hspace*{1.4em} & 7.27 \hspace*{1.4em}
+    Relevant renames                & 75.85\hspace*{1.4em}
+                                    %& 4.90 \hspace*{1.4em}
+                                    \\
+    No copy detection               &  2.83\hspace*{1.4em}
+                                    %& 1.02 \hspace*{1.4em}
+                                    \\
+    Caching renames                 &  5.52\hspace*{1.4em}
+                                    %& 1.73 \hspace*{1.4em}
+                                    \\
+    Basename-guided detection       &  5.83\hspace*{1.4em}
+                                    %& 2.01 \hspace*{1.4em}
+                                    \\
+    Trivial directory resolution[*] &  4.64\hspace*{1.4em}
+                                    %& 7.27 \hspace*{1.4em}
   \end{tabular}
 
   \pause
-  \vspace*{1.5\baselineskip}
-  As a reminder, overall optimization results:\\
-  \vspace*{0.5\baselineskip}
+  \vspace*{0.4\baselineskip}
+  Overall optimization results, by testcase:\\
+  \vspace*{0.4\baselineskip}
   \qquad
   \begin{tabular}{l|r|c|r}
     Testcase       & \multicolumn{1}{c|}{Old timing}
@@ -939,7 +1140,8 @@
     few-renames:   &   18.934 s & .1892 s &  100.1 \hspace*{0.3em} \\
     mega-renames:  & 6424.660 s & .6573 s & 9774.3 \hspace*{0.3em} \\
     just-one-mega: &  173.093 s & .2612 s &  662.7 \hspace*{0.3em}
-  \end{tabular}
+  \end{tabular}\\
+  \begin{center}Overall average speed-up: 865.4\end{center}
 
 \end{frame}
 
