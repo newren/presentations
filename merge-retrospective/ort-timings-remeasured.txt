@@ -1,0 +1,207 @@
+git-v2.30.0: 2m58.853s  725175808/725175808
+             2m57.372s
+
+redone:      2m52.551s  144428480/144428480
+
+
+
+
+git-v2.30.0:diffcore-rename.c, lines 563-573 contain:
+	rename_count = find_exact_renames(options);
+
+	/*
+	 * Calculate how many renames are left (but all the source
+	 * files still remain as options for rename/copies!)
+	 */
+	num_create = (rename_dst_nr - rename_count);
+
+
+All optimizations:
+
+  Time (mean ± σ):     191.6 ms ±   3.3 ms    [User: 142.7 ms, System: 41.5 ms]
+  Range (min … max):   187.5 ms … 199.8 ms    10 runs
+
+  Time (mean ± σ):     263.0 ms ±   3.7 ms    [User: 207.8 ms, System: 46.0 ms]
+  Range (min … max):   260.0 ms … 272.9 ms    10 runs
+
+  Time (mean ± σ):     661.4 ms ±   7.2 ms    [User: 584.6 ms, System: 65.6 ms]
+  Range (min … max):   654.0 ms … 671.1 ms    5 runs
+
+All-but-1:
+
+  Time (mean ± σ):     192.7 ms ±   1.8 ms    [User: 139.7 ms, System: 46.2 ms]
+  Range (min … max):   190.7 ms … 195.3 ms    10 runs
+ 
+  Time (mean ± σ):     269.6 ms ±   2.2 ms    [User: 211.8 ms, System: 49.2 ms]
+  Range (min … max):   265.9 ms … 274.3 ms    10 runs
+ 
+  Time (mean ± σ):     684.2 ms ±   3.9 ms    [User: 607.2 ms, System: 65.5 ms]
+  Range (min … max):   679.9 ms … 688.5 ms    5 runs
+
+All-but-2:
+
+  Time (mean ± σ):     194.1 ms ±   2.6 ms    [User: 141.8 ms, System: 45.2 ms]
+  Range (min … max):   190.4 ms … 198.2 ms    10 runs
+ 
+  Time (mean ± σ):     628.0 ms ±   5.0 ms    [User: 523.2 ms, System: 93.7 ms]
+  Range (min … max):   617.3 ms … 634.6 ms    10 runs
+ 
+  Time (mean ± σ):      2.200 s ±  0.013 s    [User: 1.893 s, System: 0.284 s]
+  Range (min … max):    2.179 s …  2.212 s    5 runs
+
+All-but-3:
+
+  Time (mean ± σ):     194.8 ms ±   1.5 ms    [User: 142.8 ms, System: 44.9 ms]
+  Range (min … max):   193.0 ms … 197.1 ms    10 runs
+ 
+  Time (mean ± σ):      3.630 s ±  0.010 s    [User: 3.218 s, System: 0.359 s]
+  Range (min … max):    3.617 s …  3.648 s    10 runs
+ 
+  Time (mean ± σ):     13.844 s ±  0.025 s    [User: 12.673 s, System: 0.988 s]
+  Range (min … max):   13.821 s … 13.874 s    5 runs
+
+All-but-4:
+
+  Time (mean ± σ):     196.7 ms ±   3.5 ms    [User: 142.5 ms, System: 47.2 ms]
+  Range (min … max):   192.2 ms … 202.4 ms    10 runs
+ 
+  Time (mean ± σ):     266.5 ms ±   2.4 ms    [User: 206.0 ms, System: 51.6 ms]
+  Range (min … max):   263.8 ms … 271.4 ms    10 runs
+ 
+  Time (mean ± σ):      3.339 s ±  0.009 s    [User: 3.206 s, System: 0.111 s]
+  Range (min … max):    3.327 s …  3.350 s    5 runs
+
+
+All-but-5:
+
+  Time (mean ± σ):      4.489 s ±  0.027 s    [User: 4.373 s, System: 0.092 s]
+  Range (min … max):    4.442 s …  4.516 s    10 runs
+ 
+  Time (mean ± σ):     394.4 ms ±   2.4 ms    [User: 334.3 ms, System: 51.3 ms]
+  Range (min … max):   389.2 ms … 397.6 ms    10 runs
+ 
+  Time (mean ± σ):      7.073 s ±  0.031 s    [User: 6.884 s, System: 0.143 s]
+  Range (min … max):    7.047 s …  7.120 s    5 runs
+
+----------------------------------------------------------------------
+
+All-but-1:
+  Time (mean ± σ):     193.8 ms ±   1.7 ms    [User: 141.4 ms, System: 44.5 ms]
+  Range (min … max):   191.0 ms … 196.0 ms    10 runs
+ 
+  Time (mean ± σ):     272.2 ms ±   1.3 ms    [User: 208.7 ms, System: 55.0 ms]
+  Range (min … max):   269.5 ms … 273.7 ms    10 runs
+ 
+  Time (mean ± σ):     681.6 ms ±   2.5 ms    [User: 603.2 ms, System: 67.4 ms]
+  Range (min … max):   677.5 ms … 683.3 ms    5 runs
+
+All-but-2:
+
+  Time (mean ± σ):     194.6 ms ±   3.0 ms    [User: 139.2 ms, System: 47.7 ms]
+  Range (min … max):   190.7 ms … 199.2 ms    10 runs
+ 
+  Time (mean ± σ):     630.3 ms ±   2.3 ms    [User: 518.8 ms, System: 100.6 ms]
+  Range (min … max):   625.7 ms … 633.6 ms    10 runs
+ 
+  Time (mean ± σ):      2.216 s ±  0.005 s    [User: 1.927 s, System: 0.268 s]
+  Range (min … max):    2.212 s …  2.224 s    5 runs
+
+All-but-3:
+
+  Time (mean ± σ):     192.9 ms ±   2.4 ms    [User: 140.7 ms, System: 45.5 ms]
+  Range (min … max):   189.4 ms … 195.5 ms    10 runs
+ 
+  Time (mean ± σ):      3.684 s ±  0.017 s    [User: 3.281 s, System: 0.350 s]
+  Range (min … max):    3.667 s …  3.722 s    10 runs
+ 
+  Time (mean ± σ):      5.584 s ±  0.099 s    [User: 5.135 s, System: 0.381 s]
+  Range (min … max):    5.517 s …  5.759 s    5 runs
+
+All-but-4:
+
+  Time (mean ± σ):     194.7 ms ±   2.8 ms    [User: 141.7 ms, System: 45.6 ms]
+  Range (min … max):   191.1 ms … 200.0 ms    10 runs
+ 
+  Time (mean ± σ):     265.9 ms ±   3.2 ms    [User: 205.9 ms, System: 50.9 ms]
+  Range (min … max):   262.1 ms … 273.8 ms    10 runs
+ 
+  Time (mean ± σ):      3.361 s ±  0.016 s    [User: 3.219 s, System: 0.117 s]
+  Range (min … max):    3.345 s …  3.386 s    5 runs
+
+All-but-5:
+
+  Time (mean ± σ):      4.518 s ±  0.022 s    [User: 4.409 s, System: 0.084 s]
+  Range (min … max):    4.488 s …  4.567 s    10 runs
+ 
+  Time (mean ± σ):     396.6 ms ±   2.3 ms    [User: 333.7 ms, System: 53.4 ms]
+  Range (min … max):   393.7 ms … 399.5 ms    10 runs
+
+  Time (mean ± σ):      7.090 s ±  0.014 s    [User: 6.903 s, System: 0.146 s]
+  Range (min … max):    7.072 s …  7.107 s    5 runs
+
+All-five:
+
+  Time (mean ± σ):     195.8 ms ±   3.3 ms    [User: 141.1 ms, System: 47.0 ms]
+  Range (min … max):   189.2 ms … 200.1 ms    10 runs
+ 
+  Time (mean ± σ):     266.0 ms ±   3.7 ms    [User: 208.7 ms, System: 49.0 ms]
+  Range (min … max):   261.2 ms … 274.8 ms    10 runs
+ 
+  Time (mean ± σ):     661.0 ms ±   4.1 ms    [User: 580.3 ms, System: 69.3 ms]
+  Range (min … max):   657.3 ms … 668.1 ms    5 runs
+
+
+
+
+----------------------------------------------------------------------
+
+git-v2.30.0 (baseline):
+  few-renames:     18.934
+  mega-renames:  6424.660
+  just-one:       173.093
+
+Optimization order:
+  1: WANT_COPY_OPTIMIZATION
+  2: WANT_BASENAME_OPTIMIZATION
+  3: WANT_RELEVANCE_OPTIMIZATION
+  4: WANT_CACHING_OPTIMIZATION
+  5: WANT_TRIVIAL_DIRECTORY_OPTIMIZATION
+
+Optimizations:   all-five  all-but-1  all-but-2  all-but-3  all-but-4  all-but-5
+  few-renames:     189.2     191.0      190.7       189.4     191.1     4488.
+  mega-renames:    657.3     677.5     2212.       5517.     3345.      7072.
+  just-one:        261.2     269.5      625.7      3667.      262.1      393.7
+
+Optimizations:     none     only-1     only-2     only-3     only-4     only-5
+  few-renames:    12.533    11.829     12.074      4.834      5.261      0.270
+  mega-renames: 5230.083  1635.59     537.175     12.115    158.929   5178????
+  just-one:      148.942    47.961     16.398      0.824    149.733    150.466
+
+Slow-downs: [ ((productized times)/(productized "all-five"))**(1/3.0) ]
+  all-but-1: 1.024
+  all-but-2: 2.010
+  all-but-3: 4.904
+  all-but-4: 1.728
+  all-but-5: 7.273
+
+Speedups: [ ((productized "baseline")/(productized times))**(1/3.0) ]
+  none:    1.292  (because "ort" is faster than "recursive" due to better code)
+  only-1:  2.831
+  only-2:  5.828
+  only-3: 75.847
+  only-4:  5.520
+  only-5:  4.643
+
+  all-but-1: 844.19
+  all-but-2: 430.48
+  all-but-3: 176.47
+  all-but-4: 500.90
+  all-but-5: 119.00
+  all:       865.44
+
+Optimization order:
+  1: WANT_COPY_OPTIMIZATION
+  2: WANT_BASENAME_OPTIMIZATION
+  3: WANT_RELEVANCE_OPTIMIZATION
+  4: WANT_CACHING_OPTIMIZATION
+  5: WANT_TRIVIAL_DIRECTORY_OPTIMIZATION
