@@ -1,0 +1,84 @@
+\usepackage{amsmath}                  % Nice math stuff
+\usepackage{amsfonts}                 % Extra math fonts (i.e., \mathbb{})
+\usepackage{amssymb}                  % Extra meth symbols
+\usepackage[mathscr]{eucal}           % Scripted math fonts
+\usepackage{listings}                 % Formatting code listings
+\usepackage{verbatim}
+%\usepackage{picins}
+\usepackage{colortbl}
+\usepackage{fancybox}
+\usepackage{textpos}
+\usepackage{color}
+
+\mode<presentation>
+{
+  \usetheme{Warsaw} % or ...
+  \setbeamercovered{transparent} % or whatever (possibly just delete it)
+  \usefonttheme[onlymath]{serif}
+}
+\mode<beamer>
+{
+  \AtBeginSection[]{
+    \begin{frame}
+      \frametitle{Outline}
+      \begin{textblock}{0.9}(0.1,0.0)
+        {\small\tableofcontents[currentsection,hideothersubsections]}
+      \end{textblock}
+    \end{frame}
+  }
+}
+% PKN: the footline isn't very useful -- better to conserve pixels
+\setbeamertemplate{footline}{}
+\setbeamertemplate{navigation symbols}{}
+\setbeamersize{text margin left=0.2cm}
+\setbeamersize{text margin right=0.2cm}
+\setbeamersize{sidebar width left=0cm}
+\setbeamersize{sidebar width right=0cm}
+%\setbeamertemplate{footline}
+%{% 
+%\begin{beamercolorbox}{section in head/foot} 
+%\vskip2pt\insertnavigation{\paperwidth}\vskip2pt 
+%\vskip2pt
+%\hfill Page \insertpagenumber \hspace{1em}
+%\end{beamercolorbox}% 
+%} 
+
+\usepackage[english]{babel}           % or whatever
+\usepackage[latin1]{inputenc}         % or whatever
+\usepackage{times}
+\usepackage[T1]{fontenc}
+
+\newcommand{\Comment}[1]{{\usebeamercolor[fg]{item}#1}}
+\newcommand{\Text}[1]{\texttt{#1}}
+\xdefinecolor{TokenColor}{rgb}{0.000, 0.700, 0.000}
+\newcommand{\Token}[1]{{\color{TokenColor}#1}}
+\xdefinecolor{HiddenColor}{rgb}{0.800, 0.800, 0.800}
+\newcommand{\Hidden}[1]{{\color{HiddenColor}#1}}
+\xdefinecolor{MyRed}{rgb}{0.800, 0.200, 0.200}
+\newcommand{\Red}[1]{{\color{MyRed}#1}}
+\xdefinecolor{MyWhite}{rgb}{1.0, 1.0, 1.0}
+\xdefinecolor{MyGrey}{rgb}{0.900, 0.900, 0.900}
+
+\setlength{\TPHorizModule}{\textwidth}
+\setlength{\TPVertModule}{\textheight}
+
+\lstloadlanguages{C++}
+\lstset{%
+  basicstyle=\ttfamily\scriptsize\bfseries, %
+  commentstyle=\usebeamercolor[fg]{item}, %
+  stringstyle=\color{TokenColor}, %
+  language=C++}
+
+%% Typeset an example command line input.
+%\newcommand{\cmd}[1]{\textbf{\texttt{#1}}}
+%\newcommand{\cl}[1]{\$ \textbf{#1}}
+%\newcommand{\cls}[1]{\texttt{\scriptsize\$ \textbf{#1}}}
+%\newcommand{\clsnp}[1]{\texttt{\scriptsize\textbf{#1}}}
+\newcommand{\hilight}{\color{blue}}
+\xdefinecolor{MyGreen}{rgb}{0.000, 0.500, 0.000} % green
+\newcommand{\nonliteral}[1]{{\color{MyGreen}#1}}
+\newcommand{\cmd}[1]{\texttt{\hilight#1}}
+\newcommand{\cl}[1]{\$ \cmd{#1}}
+
+%% typset a URL in a uniform way
+\newcommand{\Link}[1]{{\usebeamercolor[fg]{item}\underline{\url{#1}}}}
